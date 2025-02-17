@@ -1,0 +1,2 @@
+# Novavino
+Django Project
