@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<h1>Sistema Novavino - Administración</h1>
+<p>
+    <a href="{% url 'corte_semanal' %}" class="button">📊 Ir a Corte Semanal</a>
+</p>
+{{ block.super }}
+{% endblock %}

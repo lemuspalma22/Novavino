@@ -6,5 +6,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('compras/', include('compras.urls')),  # Agrega esta línea
     path('inventario/', include('inventario.urls')),
+    path("ventas/", include("ventas.urls")),
 
 ]

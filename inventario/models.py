@@ -9,6 +9,9 @@ class Producto(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='productos_inventario')
     precio_compra = models.DecimalField(max_digits=10, decimal_places=2)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
+    es_personalizado = models.BooleanField(default=False, verbose_name="Personalizado")
+    stock = models.IntegerField(default=0)
+
 
     def __str__(self):
         return f"{self.nombre} - {self.tipo if self.tipo else 'Sin tipo definido'}"
