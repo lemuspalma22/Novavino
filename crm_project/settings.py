@@ -56,15 +56,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'crm_project.wsgi.application'
 
+db_url = os.getenv("MYSQL_PUBLIC_URL", "mysql://root:oNwIXFdUIgRVZLWVsUYgdKsbbiaqONCh@mainline.proxy.rlwy.net:23404/railway")
+parsed_url = urlparse(db_url)
 # ✅ Base de datos usando Railway MySQL (Con seguridad mejorada)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQLDATABASE'),  # Evita valores predeterminados inseguros
-        'USER': os.getenv('MYSQLUSER'),
-        'PASSWORD': os.getenv('MYSQLPASSWORD'),
-        'HOST': os.getenv('MYSQLHOST'),
-        'PORT': os.getenv('MYSQLPORT', '3306'),
+        'NAME': parsed_url.path[1:],  # Elimina el '/' inicial
+        'USER': parsed_url.username,
+        'PASSWORD': parsed_url.password,
+        'HOST': parsed_url.hostname,
+        'PORT': parsed_url.port,
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
