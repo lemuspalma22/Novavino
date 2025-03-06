@@ -98,7 +98,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Aseguramos que los archivos estáticos se sirvan en producción
 if not DEBUG:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # Clave primaria automática
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
