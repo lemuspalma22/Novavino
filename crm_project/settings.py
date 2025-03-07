@@ -64,7 +64,7 @@ parsed_url = urlparse(db_url)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'railway',
+        'NAME': 'crm_db',
         'USER': parsed_url.username,
         'PASSWORD': parsed_url.password,
         'HOST': parsed_url.hostname,
