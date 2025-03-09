@@ -65,7 +65,7 @@ parsed_url = urlparse(db_url)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQLDATABASE'),
+        'NAME': os.getenv('MYSQLDATABASE', 'crm_db'),
         'USER': os.getenv('MYSQLUSER'),
         'PASSWORD': os.getenv('MYSQLPASSWORD'),
         'HOST': os.getenv('MYSQLHOST'),
