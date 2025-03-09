@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import pymysql
 pymysql.install_as_MySQLdb()
 
-pymysql.install_as_MySQLdb()
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -66,13 +65,14 @@ parsed_url = urlparse(db_url)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', '3306'),  # Usa 3306 si no hay puerto definido
+        'NAME': os.getenv('MYSQLDATABASE'),
+        'USER': os.getenv('MYSQLUSER'),
+        'PASSWORD': os.getenv('MYSQLPASSWORD'),
+        'HOST': os.getenv('MYSQLHOST'),
+        'PORT': os.getenv('MYSQLPORT', '3306'),
     }
 }
+
 
 # Validación de contraseñas
 AUTH_PASSWORD_VALIDATORS = [
