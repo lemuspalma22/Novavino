@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import pymysql
 from urllib.parse import urlparse
+import pymysql
+pymysql.install_as_MySQLdb()
 
 pymysql.install_as_MySQLdb()
 
