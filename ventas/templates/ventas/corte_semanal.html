@@ -65,28 +65,35 @@ document.getElementById("form-corte").onsubmit = function(event) {
     .then(data => {
         const tbody = document.querySelector("#tabla-reporte tbody");
         tbody.innerHTML = "";
+
         let totalVenta = 0, totalCosto = 0, totalGanancia = 0;
-        let totalProductosPersonalizados = 0, totalProductosNoPersonalizados = 0;
+        let totalProductosPersonalizados = {};
+        let totalProductosNoPersonalizados = {};
+
+        function diccionarioAHTML(diccionario) {
+            if (diccionario === "Ninguno") return "Ninguno";
+            return Object.entries(diccionario).map(([nombre, cantidad]) => `<b>${nombre}:</b> ${cantidad}`).join("<br>");
+        }
 
         data.reporte.forEach(factura => {
             let row = `<tr>
                 <td>${factura.folio}</td>
                 <td>${factura.cliente}</td>
                 <td>${factura.fecha}</td>
-                <td>${factura.total_venta}</td>
-                <td>${factura.costo_proveedores}</td>
-                <td>${factura.ganancia}</td>
-                <td>${factura.productos_personalizados}</td>
-                <td>${factura.productos_no_personalizados}</td>
+                <td>${factura.total_venta.toFixed(2)}</td>
+                <td>${factura.costo_proveedores.toFixed(2)}</td>
+                <td>${factura.ganancia.toFixed(2)}</td>
+                <td>${diccionarioAHTML(factura.productos_personalizados)}</td>
+                <td>${diccionarioAHTML(factura.productos_no_personalizados)}</td>
             </tr>`;
             tbody.innerHTML += row;
         });
 
-        document.getElementById("total-venta").innerText = data.totales.total_venta;
-        document.getElementById("total-costo").innerText = data.totales.total_costo_proveedores;
-        document.getElementById("total-ganancia").innerText = data.totales.total_ganancia;
-        document.getElementById("total-productos-personalizados").innerText = data.totales.productos_personalizados;
-        document.getElementById("total-productos-no-personalizados").innerText = data.totales.productos_no_personalizados;
+        document.getElementById("total-venta").innerText = data.totales.total_venta.toFixed(2);
+        document.getElementById("total-costo").innerText = data.totales.total_costo_proveedores.toFixed(2);
+        document.getElementById("total-ganancia").innerText = data.totales.total_ganancia.toFixed(2);
+        document.getElementById("total-productos-personalizados").innerHTML = diccionarioAHTML(data.totales.productos_personalizados);
+        document.getElementById("total-productos-no-personalizados").innerHTML = diccionarioAHTML(data.totales.productos_no_personalizados);
     });
 };
 

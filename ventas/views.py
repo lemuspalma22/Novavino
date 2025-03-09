@@ -26,49 +26,60 @@ def corte_semanal(request):
         # Obtener facturas en el rango de fechas
         facturas = Factura.objects.filter(fecha_facturacion__range=[fecha_inicio, fecha_fin])
 
-        # Generar datos para la tabla
-        reporte = []
+        # Inicializar totales
         total_venta = 0
         total_costo_proveedores = 0
         total_ganancia = 0
-        total_productos_personalizados = 0
-        total_productos_no_personalizados = 0
+        total_productos_personalizados = {}
+        total_productos_no_personalizados = {}
+
+        reporte = []
 
         for factura in facturas:
             costo_proveedores = sum(detalle.cantidad * detalle.precio_compra for detalle in factura.detalles.all())
             ganancia = factura.total - costo_proveedores
 
-            # Contar productos personalizados y no personalizados
-            productos_personalizados = sum(
-                detalle.cantidad for detalle in factura.detalles.all() if detalle.producto.es_personalizado
-            )
-            productos_no_personalizados = sum(
-                detalle.cantidad for detalle in factura.detalles.all() if not detalle.producto.es_personalizado
-            )
+            # Diccionarios de productos por factura
+            productos_personalizados = {}
+            productos_no_personalizados = {}
 
+            for detalle in factura.detalles.all():
+                producto = detalle.producto
+                cantidad = detalle.cantidad
+
+                if producto.es_personalizado:
+                    productos_personalizados[producto.nombre] = productos_personalizados.get(producto.nombre, 0) + cantidad
+                    total_productos_personalizados[producto.nombre] = total_productos_personalizados.get(producto.nombre, 0) + cantidad
+                else:
+                    productos_no_personalizados[producto.nombre] = productos_no_personalizados.get(producto.nombre, 0) + cantidad
+                    total_productos_no_personalizados[producto.nombre] = total_productos_no_personalizados.get(producto.nombre, 0) + cantidad
+
+            # Agregar datos al reporte
             reporte.append({
                 "folio": factura.folio_factura,
                 "cliente": factura.cliente,
                 "fecha": factura.fecha_facturacion.strftime("%d-%b-%Y"),
                 "total_venta": factura.total,
                 "costo_proveedores": costo_proveedores,
-                "ganancia": ganancia
+                "ganancia": ganancia,
+                "productos_personalizados": productos_personalizados if productos_personalizados else "Ninguno",
+                "productos_no_personalizados": productos_no_personalizados if productos_no_personalizados else "Ninguno",
             })
 
+            # Acumular totales
             total_venta += factura.total
             total_costo_proveedores += costo_proveedores
             total_ganancia += ganancia
-            total_productos_personalizados += productos_personalizados
-            total_productos_no_personalizados += productos_no_personalizados
 
+        # Responder con JSON para el frontend
         return JsonResponse({
             "reporte": reporte,
             "totales": {
                 "total_venta": total_venta,
                 "total_costo_proveedores": total_costo_proveedores,
                 "total_ganancia": total_ganancia,
-                "productos_personalizados": total_productos_personalizados,
-                "productos_no_personalizados": total_productos_no_personalizados
+                "productos_personalizados": total_productos_personalizados if total_productos_personalizados else "Ninguno",
+                "productos_no_personalizados": total_productos_no_personalizados if total_productos_no_personalizados else "Ninguno",
             }
         })
 
