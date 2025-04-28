@@ -1,5 +1,6 @@
 from django.db import models
 from compras.models import Proveedor  # Importamos el modelo de Proveedor
+from django.utils import timezone
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -12,22 +13,35 @@ class Producto(models.Model):
     es_personalizado = models.BooleanField(default=False, verbose_name="Personalizado")
     stock = models.IntegerField(default=0)
 
-
     def __str__(self):
         return f"{self.nombre} - {self.tipo if self.tipo else 'Sin tipo definido'}"
 
+class AliasProducto(models.Model):
+    alias = models.CharField(max_length=200, unique=True)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="aliases")
+
+    def __str__(self):
+        return f"{self.alias} → {self.producto.nombre}"
 
 class Inventario(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
-    stock_minimo = models.IntegerField(default=5)  # Stock mínimo recomendado
-    fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # Primera vez que se agrega al inventario
-    fecha_actualizacion = models.DateTimeField(auto_now=True)  # Última actualización
+    stock_minimo = models.IntegerField(default=5)
+    fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     @property
     def estado_stock(self):
-        """Retorna 'Bajo' si el stock está por debajo del mínimo."""
         return "Bajo" if self.cantidad < self.stock_minimo else "Suficiente"
 
     def __str__(self):
         return f"{self.producto.nombre} - Cantidad: {self.cantidad} - Estado: {self.estado_stock}"
+
+class ProductoNoReconocido(models.Model):
+    nombre_detectado = models.CharField(max_length=200)
+    fecha_detectado = models.DateTimeField(default=timezone.now)
+    uuid_factura = models.CharField(max_length=100, null=True, blank=True)
+    procesado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.nombre_detectado} ({'Procesado' if self.procesado else 'Pendiente'})"

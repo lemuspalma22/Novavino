@@ -17,4 +17,8 @@
 	python manage.py migrate
 
 
+- Levantar el servidor localmente:
+	python manage.py runserver
+	Ruta: http://127.0.0.1:8000/admin/
+
 

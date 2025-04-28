@@ -61,18 +61,31 @@ WSGI_APPLICATION = 'crm_project.wsgi.application'
 
 db_url = os.getenv("MYSQL_PUBLIC_URL", "mysql://root:oNwIXFdUIgRVZLWVsUYgdKsbbiaqONCh@mainline.proxy.rlwy.net:23404/railway")
 parsed_url = urlparse(db_url)
+
+#PRODUCCION
 # ✅ Base de datos usando Railway MySQL (Con seguridad mejorada)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.getenv('MYSQLDATABASE', 'crm_db'),
+#         'USER': os.getenv('MYSQLUSER'),
+#         'PASSWORD': os.getenv('MYSQLPASSWORD'),
+#         'HOST': os.getenv('MYSQLHOST'),
+#         'PORT': os.getenv('MYSQLPORT', '3306'),
+#     }
+# }
+
+#LOCAL:
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQLDATABASE', 'crm_db'),
-        'USER': os.getenv('MYSQLUSER'),
-        'PASSWORD': os.getenv('MYSQLPASSWORD'),
-        'HOST': os.getenv('MYSQLHOST'),
-        'PORT': os.getenv('MYSQLPORT', '3306'),
+        'NAME': 'crm_db',  # Reemplázalo por el nombre correcto si es diferente
+        'USER': 'root',     # O el usuario que usaste para crear la DB
+        'PASSWORD': 'AlfredoLemusG1022$',  # La contraseña local de MySQL
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
-
 
 # Validación de contraseñas
 AUTH_PASSWORD_VALIDATORS = [
@@ -88,9 +101,13 @@ TIME_ZONE = 'America/Mexico_City'
 USE_I18N = True
 USE_TZ = True
 
-# Archivos estáticos
+# Archivos estáticos productivos:
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Directorios adicionales donde Django buscará archivos estáticos en desarrollo: Para pro sólo borra loas siguientes  3 líneas
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Asegura que 'static' es el nombre correcto de tu carpeta de estáticos
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

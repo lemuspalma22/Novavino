@@ -15,8 +15,9 @@ class Producto(models.Model):
         return f"{self.nombre} - {self.proveedor.nombre}"
 
 class Compra(models.Model):
+    uuid = models.CharField(max_length=100, unique=True)
     folio = models.CharField(max_length=20)
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, null=True, blank=True)
     fecha = models.DateField()
     total = models.DecimalField(max_digits=10, decimal_places=2)
     revision = models.BooleanField(default=False)
@@ -33,14 +34,18 @@ class Compra(models.Model):
     def __str__(self):
         return f"Compra {self.folio} - Proveedor: {self.proveedor} - Estado: {self.estado}"
 
+from django.apps import apps
+
 class CompraProducto(models.Model):
-    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='productos')
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    compra = models.ForeignKey("Compra", on_delete=models.CASCADE, related_name='productos')
+    producto = models.ForeignKey("inventario.Producto", on_delete=models.CASCADE)
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    detectado_como = models.CharField(max_length=200, null=True, blank=True)
 
     def subtotal(self):
         return self.cantidad * self.precio_unitario
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} en Compra {self.compra.folio}"
+
