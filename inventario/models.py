@@ -38,10 +38,16 @@ class Inventario(models.Model):
         return f"{self.producto.nombre} - Cantidad: {self.cantidad} - Estado: {self.estado_stock}"
 
 class ProductoNoReconocido(models.Model):
+    ORIGENES = [
+        ("compra", "Compra"),
+        ("venta", "Venta"),
+    ]
+
     nombre_detectado = models.CharField(max_length=200)
     fecha_detectado = models.DateTimeField(default=timezone.now)
     uuid_factura = models.CharField(max_length=100, null=True, blank=True)
     procesado = models.BooleanField(default=False)
+    origen = models.CharField(max_length=10, choices=ORIGENES, default="compra")
 
     def __str__(self):
         return f"{self.nombre_detectado} ({'Procesado' if self.procesado else 'Pendiente'})"

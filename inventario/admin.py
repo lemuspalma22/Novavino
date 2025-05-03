@@ -13,7 +13,7 @@ class AliasProductoAdmin(admin.ModelAdmin):
 
 class ProductoNoReconocidoAdmin(admin.ModelAdmin):
     list_display = ("nombre_detectado", "fecha_detectado", "uuid_factura", "procesado")
-    list_filter = ("procesado",)
+    list_filter = ("procesado","origen")
     search_fields = ("nombre_detectado", "uuid_factura")
 
 admin.site.register(Producto, ProductoAdmin)
