@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h2>Convertir productos no reconocidos</h2>
+  <p>Asocia cada nombre detectado con un producto real existente o crea uno nuevo.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Nombre detectado</th>
+          <th>Producto existente (alias)</th>
+          <th>Crear nuevo producto</th>
+          <th>Proveedor</th>
+          <th>Precio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in form_data %}
+          <tr>
+            <td><strong>{{ item.nombre_detectado }}</strong></td>
+            <td>{{ item.alias_form.alias }}</td>
+            <td>{{ item.crear_form.crear }}</td>
+            <td>{{ item.proveedor_field }}</td>
+            <td>{{ item.precio_field }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top: 1em;">
+      <input type="submit" class="default" value="Guardar conversiones" />
+    </div>
+  </form>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("input[type=checkbox]").forEach(function (checkbox) {
+        const prefix = checkbox.id.replace("id_crear_", "");
+        const proveedorField = document.getElementById("id_proveedor_" + prefix);
+        const precioField = document.getElementById("id_precio_" + prefix);
+
+        function toggleFields() {
+          const enabled = checkbox.checked;
+          if (proveedorField) proveedorField.disabled = !enabled;
+          if (precioField) precioField.disabled = !enabled;
+        }
+
+        toggleFields();
+        checkbox.addEventListener("change", toggleFields);
+      });
+    });
+  </script>
+{% endblock %}

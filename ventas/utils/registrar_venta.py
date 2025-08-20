@@ -1,67 +1,108 @@
-from compras.models import Compra, CompraProducto
-from inventario.models import Producto, ProductoNoReconocido
+# ventas/utils/registrar_venta.py
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal
 from datetime import datetime
 from django.utils.timezone import now
-import re
 
-def es_producto_valido(nombre: str) -> bool:
-    nombre = nombre.strip()
-    if not nombre:
-        return False
+from ventas.models import Factura, DetalleFactura
+from inventario.models import Producto, AliasProducto, ProductoNoReconocido
 
-    if re.fullmatch(r"[\d,.]+", nombre):
-        return False
 
-    patrones_prohibidos = [
-        r"^IEPS", r"^IVA", r"^pz$", r"^CP:", r"^\d{5}$", r"Comprobante", r"Pago", r"Emisión",
-        r"^Fecha", r"^NOMBRE:", r"^RFC", r"^Uso CFDI", r"^Subtotal", r"^Total", r"^Importe",
-        r"[A-Z]{5,}[0-9]{2,}"  # Posibles RFC o certificados
-    ]
+def _resolver_producto(nombre_detectado: str):
+    """
+    Intenta resolver un Producto a partir del nombre detectado:
+      1) Coincidencia exacta por nombre
+      2) Alias (AliasProducto.alias__iexact)
+    Retorna Producto o None.
+    """
+    nombre = nombre_detectado.strip()
 
-    for patron in patrones_prohibidos:
-        if re.search(patron, nombre, re.IGNORECASE):
-            return False
+    # 1) nombre exacto
+    prod = Producto.objects.filter(nombre__iexact=nombre).first()
+    if prod:
+        return prod
 
-    return True
+    # 2) alias
+    alias = AliasProducto.objects.filter(alias__iexact=nombre).select_related("producto").first()
+    if alias:
+        return alias.producto
 
-def registrar_compra_automatizada(datos_extraidos: dict) -> Compra:
-    fecha_raw = datos_extraidos["fecha_emision"]
-    fecha = fecha_raw if isinstance(fecha_raw, datetime) else datetime.fromisoformat(str(fecha_raw))
-    fecha_compra = fecha.date()
+    return None
 
-    compra = Compra.objects.create(
-        folio=datos_extraidos["folio"],
-        total=datos_extraidos["total"],
-        proveedor=datos_extraidos["proveedor"],
-        fecha=fecha_compra
+
+def registrar_venta_automatizada(datos: dict) -> Factura:
+    """
+    Crea la Factura y sus DetalleFactura si los productos son reconocidos.
+    Si un producto no existe, crea un ProductoNoReconocido (origen='venta').
+    SOLO recalcula el total si hubo al menos un detalle creado; de lo contrario
+    conserva el total extraído del PDF.
+    """
+    # Normaliza/convierte tipos
+    fecha_raw = datos.get("fecha_emision")
+    if isinstance(fecha_raw, str):
+        # acepta "2025-04-14T17:06:29" o "2025-04-14 17:06:29"
+        fecha_raw = fecha_raw.replace("T", " ")
+        fecha_dt = datetime.fromisoformat(fecha_raw)
+    else:
+        fecha_dt = fecha_raw  # ya es datetime
+
+    total_extraido = datos.get("total")
+    total_decimal = Decimal(str(total_extraido)) if total_extraido is not None else Decimal("0")
+
+    factura = Factura.objects.create(
+        folio_factura=str(datos.get("folio")).strip(),
+        total=total_decimal,  # asignamos el total del PDF por defecto
+        cliente=datos.get("cliente") or "",
+        fecha_facturacion=fecha_dt.date() if fecha_dt else now().date(),
     )
 
-    for prod in datos_extraidos["productos"]:
-        nombre = prod["nombre"].strip()
-        cantidad = prod["cantidad"]
-        precio_unitario = prod["precio_unitario"]
+    detalles_creados = 0
 
-        if not es_producto_valido(nombre):
-            continue  # Ignorar líneas no válidas
+    for prod in datos.get("productos", []):
+        nombre = str(prod.get("nombre", "")).strip()
+        cantidad = Decimal(str(prod.get("cantidad", "0")))
+        precio_unitario = Decimal(str(prod.get("precio_unitario", "0")))
 
-        producto = Producto.objects.filter(nombre__iexact=nombre).first()
+        if not nombre or cantidad <= 0 or precio_unitario <= 0:
+            # línea inválida; registramos como no reconocido para inspección
+            if nombre:
+                ProductoNoReconocido.objects.get_or_create(
+                    nombre_detectado=nombre,
+                    defaults={
+                        "fecha_detectado": now(),
+                        "uuid_factura": datos.get("uuid") or "",
+                        "procesado": False,
+                        "origen": "venta",
+                    },
+                )
+            continue
+
+        producto = _resolver_producto(nombre)
 
         if producto:
-            CompraProducto.objects.create(
-                compra=compra,
+            DetalleFactura.objects.create(
+                factura=factura,
                 producto=producto,
-                cantidad=cantidad,
-                precio_unitario=precio_unitario
+                cantidad=int(cantidad),            # tu modelo usa IntegerField
+                precio_unitario=precio_unitario,   # ya trae impuestos (según extractor)
+                # precio_compra se llena en save() desde producto.precio_compra
             )
-            producto.stock += int(cantidad)
-            producto.save()
+            detalles_creados += 1
         else:
-            ProductoNoReconocido.objects.create(
+            # Guardamos el nombre para que lo conviertas en alias desde el Admin
+            ProductoNoReconocido.objects.get_or_create(
                 nombre_detectado=nombre,
-                fecha_detectado=now(),
-                uuid_factura=datos_extraidos["uuid"],
-                procesado=False,
-                origen="compra"
+                defaults={
+                    "fecha_detectado": now(),
+                    "uuid_factura": datos.get("uuid") or "",
+                    "procesado": False,
+                    "origen": "venta",
+                },
             )
 
-    return compra
+    # ✅ Solo recalcular si hubo al menos un detalle creado.
+    if detalles_creados > 0:
+        factura.calcular_total()
+    # si no hubo detalles, se conserva el total extraído (no lo pisamos con 0)
+
+    return factura

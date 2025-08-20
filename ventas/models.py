@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.utils import timezone
 from datetime import timedelta
 from inventario.models import Producto  # Importamos el modelo Producto
@@ -61,16 +62,23 @@ class DetalleFactura(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # 🔹 Agregamos un valor por defecto
 
     def save(self, *args, **kwargs):
-        # Obtener el precio de compra del producto
-        self.precio_compra = self.producto.precio_compra
-        # Calcular subtotal
-        self.subtotal = self.cantidad * self.precio_unitario
+        # ✅ Protección: sólo si viene vacío/0, tómalo del Producto
+        if self.producto and (self.precio_compra is None or Decimal(self.precio_compra) == 0):
+            self.precio_compra = self.producto.precio_compra or Decimal("0.00")
+
+        # ✅ Subtotal consistente
+        cant = Decimal(self.cantidad or 0)
+        pvu  = Decimal(self.precio_unitario or 0)
+        self.subtotal = (cant * pvu).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
         super().save(*args, **kwargs)
-        self.factura.calcular_total()  # Recalcular total de la factura
+
+        # ✅ Recalcular total de la factura si el método existe
+        if hasattr(self.factura, "calcular_total"):
+            self.factura.calcular_total()
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} - {self.factura.folio_factura}"
-
 
 
 class PagoFactura(models.Model):

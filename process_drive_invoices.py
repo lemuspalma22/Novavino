@@ -9,13 +9,12 @@ from pydrive2.drive import GoogleDrive
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "crm_project.settings")
 django.setup()
 
-from compras.models import Compra, CompraProducto
-from inventario.models import Producto, AliasProducto, ProductoNoReconocido
 from factura_parser import extract_invoice_data
+from compras.utils.registrar_compra import registrar_compra_automatizada
 
 # === CONFIGURACIÓN ===
 FOLDER_ID = '1o9SkoeJ66qoBEbmyzXXhs1I67PQStTWV'
-PROCESADOS_FOLDER_ID = None  # O usa el ID de tu carpeta 'procesados' si deseas moverlos
+PROCESADOS_FOLDER_ID = None  # O usa el ID de tu carpeta 'procesados'
 
 # === AUTENTICACIÓN GOOGLE DRIVE ===
 def get_drive():
@@ -31,26 +30,10 @@ def get_drive():
     return GoogleDrive(gauth)
 
 # === VERIFICAR SI YA FUE PROCESADO ===
+from compras.models import Compra
+
 def is_processed(uuid):
     return Compra.objects.filter(uuid=uuid).exists()
-
-# === RESOLVER PRODUCTO CON ALIAS Y FALLBACK ===
-def get_or_register_producto(nombre_detectado):
-    try:
-        return Producto.objects.get(nombre=nombre_detectado)
-    except Producto.DoesNotExist:
-        pass
-    try:
-        alias = AliasProducto.objects.get(alias__iexact=nombre_detectado)
-        return alias.producto
-    except AliasProducto.DoesNotExist:
-        pass
-    if not ProductoNoReconocido.objects.filter(nombre_detectado=nombre_detectado).exists():
-        ProductoNoReconocido.objects.create(nombre_detectado=nombre_detectado)
-        print(f"🟡 Producto no reconocido registrado: {nombre_detectado}")
-    else:
-        print(f"🟡 Ya registrado como no reconocido: {nombre_detectado}")
-    return None
 
 # === PROCESAR ARCHIVO PDF ===
 def process_pdf_file(file, temp_path):
@@ -59,33 +42,25 @@ def process_pdf_file(file, temp_path):
     try:
         data = extract_invoice_data(temp_path)
 
-        # Validar que UUID exista antes de verificar duplicado
+        # Adjuntar UUID del archivo Drive como identificador único
         uuid = file['id']
         data['uuid'] = uuid
 
-        # Asegurar que folio y fecha estén presentes
+        # Validaciones mínimas
         if not data.get("folio"):
             raise ValueError("❌ No se encontró el folio en la factura.")
-        if not data.get("fecha"):
-            raise ValueError("❌ No se encontró la fecha en la factura.")
+        if not data.get("fecha_emision"):
+            if data.get("fecha"):
+                data["fecha_emision"] = data["fecha"]  # 🛠️ Fix temporal automático
+            else:
+                raise ValueError("❌ No se encontró la fecha_emision ni la fecha en la factura.")
 
         if is_processed(uuid):
             print(f"⏩ Ya procesado: {file['title']}")
             return False
 
-        # Crear la compra
-        compra = Compra.objects.create(**{k: v for k, v in data.items() if k != 'productos'})
-
-        for prod in data.get('productos', []):
-            producto = get_or_register_producto(prod['nombre_detectado'])
-            if producto:
-                CompraProducto.objects.create(
-                    compra=compra,
-                    producto=producto,
-                    cantidad=prod['cantidad'],
-                    precio_unitario=prod['precio_unitario'],
-                    detectado_como=prod['nombre_detectado']
-                )
+        # 💾 Guardar compra completa
+        registrar_compra_automatizada(data)
 
         print(f"✅ Procesado: {file['title']}")
         return True
@@ -125,7 +100,7 @@ def main():
     print("\n📊 Resumen:")
     print(f"📄 Archivos revisados: {total}")
     print(f"📦 Nuevas compras registradas: {procesados}")
-    print(f"⏩ Ya procesadas anteriormente: {ignorados}")
+    print(f"⏩ Ya procesadas anteriormente o fallidas: {ignorados}")
 
 if __name__ == "__main__":
     main()

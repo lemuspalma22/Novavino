@@ -6,6 +6,8 @@ from datetime import datetime
 import csv  # Importar csv para exportación a CSV
 from reportlab.lib.pagesizes import letter  # Importar report lab para PDF
 from reportlab.pdfgen import canvas
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse, Http404
 
 def get_producto_precio(request, producto_id):
     try:
@@ -14,76 +16,105 @@ def get_producto_precio(request, producto_id):
     except Producto.DoesNotExist:
         return JsonResponse({"error": "Producto no encontrado"}, status=404)
 
+def _parse_date(s: str):
+    if not s:
+        return None
+    try:
+        # Inputs type="date" llegan como YYYY-MM-DD
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+@require_http_methods(["GET", "POST"])
 def corte_semanal(request):
-    if request.method == "POST":
-        fecha_inicio = request.POST.get("fecha_inicio")
-        fecha_fin = request.POST.get("fecha_fin")
+    """
+    GET  con ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD  -> JSON (para el fetch)
+    POST con fecha_inicio/fecha_fin                      -> JSON (compatibilidad)
+    GET sin parámetros                                   -> render del template
+    """
+    # 1) Leer parámetros (soporta ambos nombres y métodos)
+    start_raw = request.GET.get("start_date") or request.POST.get("fecha_inicio")
+    end_raw   = request.GET.get("end_date")   or request.POST.get("fecha_fin")
 
-        # Convertir a tipo fecha
-        fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
-        fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+    start_date = _parse_date(start_raw)
+    end_date   = _parse_date(end_raw)
 
-        # Obtener facturas en el rango de fechas
-        facturas = Factura.objects.filter(fecha_facturacion__range=[fecha_inicio, fecha_fin])
+    # Si no hay fechas: render normal del template (carga inicial de la página)
+    if not (start_date and end_date):
+        return render(request, "ventas/corte_semanal.html")
 
-        # Inicializar totales
-        total_venta = 0
-        total_costo_proveedores = 0
-        total_ganancia = 0
-        total_productos_personalizados = {}
-        total_productos_no_personalizados = {}
+    # 2) Query (optimizada con prefetch)
+    facturas = (
+        Factura.objects
+        .filter(fecha_facturacion__range=[start_date, end_date])
+        .prefetch_related("detalles__producto")
+    )
 
-        reporte = []
+    # 3) Acumuladores
+    total_venta = 0
+    total_costo_proveedores = 0
+    total_ganancia = 0
+    total_productos_personalizados = {}
+    total_productos_no_personalizados = {}
 
-        for factura in facturas:
-            costo_proveedores = sum(detalle.cantidad * detalle.precio_compra for detalle in factura.detalles.all())
-            ganancia = factura.total - costo_proveedores
+    reporte = []
 
-            # Diccionarios de productos por factura
-            productos_personalizados = {}
-            productos_no_personalizados = {}
+    for factura in facturas:
+        # Costo de proveedores por factura
+        costo_proveedores = sum(
+            (det.cantidad or 0) * (det.precio_compra or 0)
+            for det in factura.detalles.all()
+        )
+        ganancia = (factura.total or 0) - costo_proveedores
 
-            for detalle in factura.detalles.all():
-                producto = detalle.producto
-                cantidad = detalle.cantidad
+        # Diccionarios por factura
+        productos_personalizados = {}
+        productos_no_personalizados = {}
 
-                if producto.es_personalizado:
-                    productos_personalizados[producto.nombre] = productos_personalizados.get(producto.nombre, 0) + cantidad
-                    total_productos_personalizados[producto.nombre] = total_productos_personalizados.get(producto.nombre, 0) + cantidad
-                else:
-                    productos_no_personalizados[producto.nombre] = productos_no_personalizados.get(producto.nombre, 0) + cantidad
-                    total_productos_no_personalizados[producto.nombre] = total_productos_no_personalizados.get(producto.nombre, 0) + cantidad
+        for det in factura.detalles.all():
+            producto = det.producto
+            cantidad = det.cantidad or 0
+            if getattr(producto, "es_personalizado", False):
+                productos_personalizados[producto.nombre] = (
+                    productos_personalizados.get(producto.nombre, 0) + cantidad
+                )
+                total_productos_personalizados[producto.nombre] = (
+                    total_productos_personalizados.get(producto.nombre, 0) + cantidad
+                )
+            else:
+                productos_no_personalizados[producto.nombre] = (
+                    productos_no_personalizados.get(producto.nombre, 0) + cantidad
+                )
+                total_productos_no_personalizados[producto.nombre] = (
+                    total_productos_no_personalizados.get(producto.nombre, 0) + cantidad
+                )
 
-            # Agregar datos al reporte
-            reporte.append({
-                "folio": factura.folio_factura,
-                "cliente": factura.cliente,
-                "fecha": factura.fecha_facturacion.strftime("%d-%b-%Y"),
-                "total_venta": factura.total,
-                "costo_proveedores": costo_proveedores,
-                "ganancia": ganancia,
-                "productos_personalizados": productos_personalizados if productos_personalizados else "Ninguno",
-                "productos_no_personalizados": productos_no_personalizados if productos_no_personalizados else "Ninguno",
-            })
-
-            # Acumular totales
-            total_venta += factura.total
-            total_costo_proveedores += costo_proveedores
-            total_ganancia += ganancia
-
-        # Responder con JSON para el frontend
-        return JsonResponse({
-            "reporte": reporte,
-            "totales": {
-                "total_venta": total_venta,
-                "total_costo_proveedores": total_costo_proveedores,
-                "total_ganancia": total_ganancia,
-                "productos_personalizados": total_productos_personalizados if total_productos_personalizados else "Ninguno",
-                "productos_no_personalizados": total_productos_no_personalizados if total_productos_no_personalizados else "Ninguno",
-            }
+        reporte.append({
+            "folio": getattr(factura, "folio_factura", ""),
+            # Si cliente es FK, lo convertimos a string legible
+            "cliente": str(getattr(factura, "cliente", "")),
+            "fecha": factura.fecha_facturacion.strftime("%d-%b-%Y"),
+            "total_venta": factura.total or 0,
+            "costo_proveedores": costo_proveedores,
+            "ganancia": ganancia,
+            "productos_personalizados": productos_personalizados or "Ninguno",
+            "productos_no_personalizados": productos_no_personalizados or "Ninguno",
         })
 
-    return render(request, "ventas/corte_semanal.html")
+        total_venta += (factura.total or 0)
+        total_costo_proveedores += costo_proveedores
+        total_ganancia += ganancia
+
+    return JsonResponse({
+        "reporte": reporte,
+        "totales": {
+            "total_venta": total_venta,
+            "total_costo_proveedores": total_costo_proveedores,
+            "total_ganancia": total_ganancia,
+            "productos_personalizados": total_productos_personalizados or "Ninguno",
+            "productos_no_personalizados": total_productos_no_personalizados or "Ninguno",
+        }
+    })
 
 
 def exportar_csv(request):
@@ -164,3 +195,18 @@ def exportar_pdf(request):
     p.showPage()
     p.save()
     return response
+
+def api_producto_precios(request, pk: int):
+    try:
+        p = Producto.objects.get(pk=pk)
+    except Producto.DoesNotExist:
+        raise Http404("Producto no encontrado")
+
+    # Ajusta los nombres de campo si en tu modelo se llaman diferente
+    precio_venta = getattr(p, "precio_unitario", None) or getattr(p, "precio_venta", 0) or 0
+    precio_compra = getattr(p, "precio_compra", 0) or 0
+
+    return JsonResponse({
+        "precio_venta": float(precio_venta),
+        "precio_compra": float(precio_compra),
+    })
