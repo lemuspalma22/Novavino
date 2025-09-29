@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.urls import path
@@ -15,8 +16,70 @@ class ProductoAdmin(admin.ModelAdmin):
     list_display  = ("nombre", "proveedor", "precio_venta", "stock", "es_personalizado")
     list_filter   = ("proveedor", "es_personalizado")
     search_fields = ("nombre", "proveedor__nombre")
+    change_list_template = "producto_changelist.html"
+    actions = ["fusionar_productos"]  # 👈 acción nueva
 
+    @admin.action(description="Fusionar productos seleccionados (sumar stock y mover alias al primero)")
+    @transaction.atomic
+    def fusionar_productos(self, request, queryset):
+        count = queryset.count()
+        if count < 2:
+            self.message_user(request, "Selecciona al menos 2 productos para fusionar.", level=messages.WARNING)
+            return
 
+        maestro = queryset.order_by("id").first()
+        originales = list(queryset.exclude(pk=maestro.pk))
+
+        stock_sumado = maestro.stock or 0
+        conflictos_alias = 0
+        creados_alias_nombre = 0
+        movidos_alias = 0
+
+        for dup in originales:
+            # 1) mover todos los alias del duplicado al maestro
+            for alias in AliasProducto.objects.filter(producto=dup):
+                texto = (alias.alias or "").strip()
+                # Evitar duplicados exactos (case-insensitive)
+                ya = AliasProducto.objects.filter(alias__iexact=texto, producto=maestro).exists()
+                if not ya:
+                    alias.producto = maestro
+                    alias.save(update_fields=["producto"])
+                    movidos_alias += 1
+                else:
+                    conflictos_alias += 1
+
+            # 2) crear un alias con el NOMBRE del duplicado apuntando al maestro (si no existe)
+            nombre_dup = (dup.nombre or "").strip()
+            if nombre_dup and not AliasProducto.objects.filter(alias__iexact=nombre_dup, producto=maestro).exists():
+                # Si choca por la UniqueConstraint (cuando la agregues), captúralo
+                try:
+                    AliasProducto.objects.create(alias=nombre_dup, producto=maestro)
+                    creados_alias_nombre += 1
+                except Exception:
+                    conflictos_alias += 1
+
+            # 3) sumar stock
+            stock_sumado += (dup.stock or 0)
+
+            # 4) eliminar el duplicado
+            dup.delete()
+
+        # 5) guardar stock total en el maestro
+        maestro.stock = stock_sumado
+        maestro.save(update_fields=["stock"])
+
+        self.message_user(
+            request,
+            (
+                f"Fusión completada. Maestro: '{maestro.nombre}'. "
+                f"Fusionados: {len(originales)}. "
+                f"Stock total: {stock_sumado}. "
+                f"Alias movidos: {movidos_alias}. "
+                f"Alias creados desde nombre: {creados_alias_nombre}. "
+                f"Conflictos de alias (omitidos): {conflictos_alias}."
+            ),
+            level=messages.SUCCESS,
+        )
 # ------------------------------
 # Alias de producto
 # ------------------------------

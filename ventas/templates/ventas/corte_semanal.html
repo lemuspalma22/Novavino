@@ -1,10 +1,14 @@
 {% extends "base.html" %}
-
 {% block content %}
-<h2>Corte Semanal de Facturas</h2>
+<h2 id="titulo-corte">Corte Semanal de Facturas</h2>
 
-<!-- Form principal: GET + nombres estándar -->
 <form id="form-corte" method="get" action="{% url 'corte_semanal' %}">
+  <label>Modo:</label>
+  <select id="modo" name="modo">
+    <option value="contable">Contable (por fecha de factura)</option>
+    <option value="flujo">Flujo (por fecha de pago)</option>
+  </select>
+
   <label>Fecha Inicio:</label>
   <input type="date" id="start_date" name="start_date" required>
   <label>Fecha Fin:</label>
@@ -12,16 +16,17 @@
   <button type="submit">Generar Reporte</button>
 </form>
 
-<!-- Exportar a CSV/PDF (mismos names que la vista) -->
 <form id="form-export-csv" action="{% url 'exportar_csv' %}" method="get">
   <input type="hidden" id="csv_fecha_inicio" name="fecha_inicio">
   <input type="hidden" id="csv_fecha_fin" name="fecha_fin">
+  <input type="hidden" id="csv_modo" name="modo">
   <button type="submit">📥 Exportar a CSV</button>
 </form>
 
 <form id="form-export-pdf" action="{% url 'exportar_pdf' %}" method="get">
   <input type="hidden" id="pdf_fecha_inicio" name="fecha_inicio">
   <input type="hidden" id="pdf_fecha_fin" name="fecha_fin">
+  <input type="hidden" id="pdf_modo" name="modo">
   <button type="submit">📄 Exportar a PDF</button>
 </form>
 
@@ -52,49 +57,50 @@
 </table>
 
 <script>
-  // --- Utilidades ---
   function diccionarioAHTML(diccionario) {
     if (!diccionario || diccionario === "Ninguno") return "Ninguno";
-    return Object.entries(diccionario)
-      .map(([nombre, cantidad]) => `<b>${nombre}:</b> ${cantidad}`)
-      .join("<br>");
+    return Object.entries(diccionario).map(([k, v]) => `<b>${k}:</b> ${v}`).join("<br>");
   }
   const toNum = v => (typeof v === "number" ? v : parseFloat(v || 0));
 
-  // --- Submit del reporte por fetch GET ---
   document.getElementById("form-corte").onsubmit = function (event) {
     event.preventDefault();
 
     const start = document.getElementById("start_date").value;
-    const end = document.getElementById("end_date").value;
+    const end   = document.getElementById("end_date").value;
+    const modo  = document.getElementById("modo").value;
     if (!start || !end) return;
 
     const url = new URL("{% url 'corte_semanal' %}", window.location.origin);
     url.searchParams.set("start_date", start);
     url.searchParams.set("end_date", end);
+    url.searchParams.set("modo", modo);
 
     fetch(url, { method: "GET" })
       .then(r => r.json())
       .then(data => {
+        document.getElementById("titulo-corte").innerText =
+          data.modo === "flujo" ? "Corte por Fecha de Pago (Flujo)" :
+                                  "Corte por Fecha de Factura (Contable)";
+
         const tbody = document.querySelector("#tabla-reporte tbody");
         tbody.innerHTML = "";
 
-        (data.reporte || []).forEach(factura => {
+        (data.reporte || []).forEach(f => {
           const row = `
             <tr>
-              <td>${factura.folio}</td>
-              <td>${factura.cliente}</td>
-              <td>${factura.fecha}</td>
-              <td>${toNum(factura.total_venta).toFixed(2)}</td>
-              <td>${toNum(factura.costo_proveedores).toFixed(2)}</td>
-              <td>${toNum(factura.ganancia).toFixed(2)}</td>
-              <td>${diccionarioAHTML(factura.productos_personalizados)}</td>
-              <td>${diccionarioAHTML(factura.productos_no_personalizados)}</td>
+              <td>${f.folio}</td>
+              <td>${f.cliente}</td>
+              <td>${f.fecha}</td>
+              <td>${toNum(f.total_venta).toFixed(2)}</td>
+              <td>${toNum(f.costo_proveedores).toFixed(2)}</td>
+              <td>${toNum(f.ganancia).toFixed(2)}</td>
+              <td>${diccionarioAHTML(f.productos_personalizados)}</td>
+              <td>${diccionarioAHTML(f.productos_no_personalizados)}</td>
             </tr>`;
           tbody.insertAdjacentHTML("beforeend", row);
         });
 
-        // Totales
         const tot = data.totales || {};
         document.getElementById("total-venta").innerText = toNum(tot.total_venta).toFixed(2);
         document.getElementById("total-costo").innerText = toNum(tot.total_costo_proveedores).toFixed(2);
@@ -102,33 +108,25 @@
         document.getElementById("total-productos-personalizados").innerHTML = diccionarioAHTML(tot.productos_personalizados);
         document.getElementById("total-productos-no-personalizados").innerHTML = diccionarioAHTML(tot.productos_no_personalizados);
       })
-      .catch(err => {
-        console.error(err);
-        alert("Ocurrió un error al generar el reporte.");
-      });
+      .catch(err => { console.error(err); alert("Ocurrió un error al generar el reporte."); });
   };
 
-  // --- Fechas para exportación (usa los mismos inputs del form principal) ---
   function setExportDates() {
-  const start = document.getElementById("start_date").value; // YYYY-MM-DD por <input type="date">
-  const end   = document.getElementById("end_date").value;
+    const start = document.getElementById("start_date").value;
+    const end   = document.getElementById("end_date").value;
+    const modo  = document.getElementById("modo").value;
+    if (!start || !end) { alert("Debes seleccionar ambas fechas."); return false; }
 
-  if (!start || !end) {
-    alert("Debes seleccionar ambas fechas.");
-    return false;
+    document.getElementById("csv_fecha_inicio").value = start;
+    document.getElementById("csv_fecha_fin").value    = end;
+    document.getElementById("csv_modo").value         = modo;
+
+    document.getElementById("pdf_fecha_inicio").value = start;
+    document.getElementById("pdf_fecha_fin").value    = end;
+    document.getElementById("pdf_modo").value         = modo;
+    return true;
   }
-
-  // Enviar exactamente YYYY-MM-DD:
-  document.getElementById("csv_fecha_inicio").value = start;
-  document.getElementById("csv_fecha_fin").value    = end;
-  document.getElementById("pdf_fecha_inicio").value = start;
-  document.getElementById("pdf_fecha_fin").value    = end;
-
-  return true;
-}
-
-document.getElementById("form-export-csv").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
-document.getElementById("form-export-pdf").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
+  document.getElementById("form-export-csv").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
+  document.getElementById("form-export-pdf").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
 </script>
-
 {% endblock %}

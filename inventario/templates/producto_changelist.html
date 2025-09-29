@@ -1,0 +1,29 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    /* Espacio entre botones */
+    .object-tools {
+      display: flex;         /* los pone en fila con separación */
+      gap: 12px;             /* separación uniforme */
+      justify-content: flex-end; /* alineados a la derecha */
+    }
+    .object-tools li {
+      float: none !important;   /* elimina el float del admin por defecto */
+      margin: 0 !important;     /* elimina márgenes raros */
+    }
+    .object-tools li a {
+      white-space: nowrap;      /* evita cortes de línea */
+    }
+  </style>
+{% endblock %}
+
+{% block object-tools %}
+  <ul class="object-tools">
+    <li><a class="addlink" href="{% url 'exportar_plantilla_csv' %}">📤 Exportar plantilla CSV</a></li>
+    <li><a class="addlink" href="{% url 'upload_stock_csv' %}">📥 Actualizar stock (CSV)</a></li>
+    <li><a class="addlink" href="{% url 'upload_csv' %}">⬆️ Cargar/actualizar productos (CSV)</a></li>
+    {{ block.super }}
+  </ul>
+{% endblock %}

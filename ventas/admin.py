@@ -12,6 +12,12 @@ class DetalleFacturaInline(admin.TabularInline):
     fields = ("producto", "cantidad", "precio_unitario", "precio_compra", "subtotal")  # Agregamos precio_compra
     readonly_fields = ("subtotal",)  # El subtotal se calcula automáticamente y no debe editarse manualmente
 
+    def subtotal(self, obj):
+        if not obj or obj.cantidad is None or obj.precio_unitario is None:
+            return 0
+        return obj.cantidad * obj.precio_unitario
+    subtotal.short_description = "Subtotal"
+    
     class Media:
         js = ("js/admin_detalle_factura.js",)  # Importa el script en Django Admin para autocompletar y calcular
 
@@ -35,13 +41,6 @@ class FacturaAdmin(admin.ModelAdmin):
         }),
     )
     inlines = [DetalleFacturaInline]  # Agregar detalles dentro de la factura
-
-    def save_related(self, request, form, formsets, change):
-        super().save_related(request, form, formsets, change)
-        obj = form.instance
-        total = obj.detalles.aggregate(s=Sum(F("cantidad") * F("precio_unitario")))["s"] or 0
-        obj.total = total
-        obj.save(update_fields=["total"])
  
     def total_display(self, obj):
         # Si aún no existe en BD o no tiene total, muéstralo como 0.00

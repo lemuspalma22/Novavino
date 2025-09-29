@@ -1,108 +1,123 @@
 # ventas/utils/registrar_venta.py
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from django.utils.timezone import now
+from django.db import transaction  # ← FALTA EN TU ARCHIVO
 
 from ventas.models import Factura, DetalleFactura
-from inventario.models import Producto, AliasProducto, ProductoNoReconocido
+from inventario.models import ProductoNoReconocido
+from inventario.utils import encontrar_producto_unico
 
 
-def _resolver_producto(nombre_detectado: str):
+def registrar_venta_automatizada(datos: dict, replace_if_exists: bool = False) -> Factura:
     """
-    Intenta resolver un Producto a partir del nombre detectado:
-      1) Coincidencia exacta por nombre
-      2) Alias (AliasProducto.alias__iexact)
-    Retorna Producto o None.
+    Crea/actualiza una Factura y sus DetalleFactura desde datos extraídos del PDF.
+    - Idempotencia:
+        * replace_if_exists=True: si existe el folio, borra detalles y recrea (signals ajustan stock).
+        * replace_if_exists=False: si existe el folio, lanza ValueError (u omite fuera).
+    - Transaccional: si una línea falla, no queda nada a medias.
+    - Resolución con encontrar_producto_unico (evita ambigüedades).
+    - Total: lo recalculan las signals al crear/borrar detalles; si no hay líneas válidas,
+             se conserva el total extraído del PDF.
     """
-    nombre = nombre_detectado.strip()
-
-    # 1) nombre exacto
-    prod = Producto.objects.filter(nombre__iexact=nombre).first()
-    if prod:
-        return prod
-
-    # 2) alias
-    alias = AliasProducto.objects.filter(alias__iexact=nombre).select_related("producto").first()
-    if alias:
-        return alias.producto
-
-    return None
-
-
-def registrar_venta_automatizada(datos: dict) -> Factura:
-    """
-    Crea la Factura y sus DetalleFactura si los productos son reconocidos.
-    Si un producto no existe, crea un ProductoNoReconocido (origen='venta').
-    SOLO recalcula el total si hubo al menos un detalle creado; de lo contrario
-    conserva el total extraído del PDF.
-    """
-    # Normaliza/convierte tipos
-    fecha_raw = datos.get("fecha_emision")
-    if isinstance(fecha_raw, str):
-        # acepta "2025-04-14T17:06:29" o "2025-04-14 17:06:29"
+    # Fecha
+    fecha_raw = datos.get("fecha_emision") or datos.get("fecha")
+    if isinstance(fecha_raw, str) and fecha_raw:
         fecha_raw = fecha_raw.replace("T", " ")
         fecha_dt = datetime.fromisoformat(fecha_raw)
     else:
-        fecha_dt = fecha_raw  # ya es datetime
+        fecha_dt = fecha_raw
 
+    # Total del PDF (solo si no hay líneas válidas)
     total_extraido = datos.get("total")
-    total_decimal = Decimal(str(total_extraido)) if total_extraido is not None else Decimal("0")
+    try:
+        total_decimal = Decimal(str(total_extraido)) if total_extraido is not None else Decimal("0")
+    except InvalidOperation:
+        total_decimal = Decimal("0")
 
-    factura = Factura.objects.create(
-        folio_factura=str(datos.get("folio")).strip(),
-        total=total_decimal,  # asignamos el total del PDF por defecto
-        cliente=datos.get("cliente") or "",
-        fecha_facturacion=fecha_dt.date() if fecha_dt else now().date(),
-    )
+    folio = str(datos.get("folio") or "").strip()
+    if not folio:
+        raise ValueError("Falta 'folio' en datos de la venta.")
 
-    detalles_creados = 0
+    cliente = (datos.get("cliente") or "").strip()
+    fecha_fact = fecha_dt.date() if fecha_dt else now().date()
+    items = datos.get("productos") or datos.get("items") or []
+    if not items:
+        return Factura.objects.create(
+            folio_factura=folio,
+            cliente=cliente,
+            fecha_facturacion=fecha_fact,
+            total=total_decimal,
+        )
 
-    for prod in datos.get("productos", []):
-        nombre = str(prod.get("nombre", "")).strip()
-        cantidad = Decimal(str(prod.get("cantidad", "0")))
-        precio_unitario = Decimal(str(prod.get("precio_unitario", "0")))
+    with transaction.atomic():
+        # Idempotencia por folio
+        try:
+            factura = Factura.objects.get(folio_factura=folio)
+            if not replace_if_exists:
+                raise ValueError(f"Ya existe la venta con folio {folio}.")
+            DetalleFactura.objects.filter(factura=factura).delete()  # signals restauran stock
+            factura.cliente = cliente or factura.cliente
+            factura.fecha_facturacion = fecha_fact or factura.fecha_facturacion
+            factura.total = Decimal("0.00")  # se recalcula por signals
+            factura.save(update_fields=["cliente", "fecha_facturacion", "total"])
+        except Factura.DoesNotExist:
+            factura = Factura.objects.create(
+                folio_factura=folio,
+                cliente=cliente,
+                fecha_facturacion=fecha_fact,
+                total=Decimal("0.00"),
+            )
 
-        if not nombre or cantidad <= 0 or precio_unitario <= 0:
-            # línea inválida; registramos como no reconocido para inspección
-            if nombre:
+        detalles_creados = 0
+
+        for prod in items:
+            nombre = str(prod.get("nombre") or prod.get("producto") or "").strip()
+            raw_cantidad = prod.get("cantidad", "0")
+            raw_pu = prod.get("precio_unitario", "")
+
+            # Validaciones mínimas
+            try:
+                cantidad = int(Decimal(str(raw_cantidad)))
+            except Exception:
+                cantidad = 0
+            if not nombre or cantidad <= 0:
+                if nombre:
+                    ProductoNoReconocido.objects.get_or_create(
+                        nombre_detectado=nombre,
+                        defaults={"fecha_detectado": now(), "uuid_factura": datos.get("uuid") or "",
+                                  "procesado": False, "origen": "venta"},
+                    )
+                continue
+
+            # Resolver producto (seguro)
+            producto, err = encontrar_producto_unico(nombre)
+            if err == "not_found":
                 ProductoNoReconocido.objects.get_or_create(
                     nombre_detectado=nombre,
-                    defaults={
-                        "fecha_detectado": now(),
-                        "uuid_factura": datos.get("uuid") or "",
-                        "procesado": False,
-                        "origen": "venta",
-                    },
+                    defaults={"fecha_detectado": now(), "uuid_factura": datos.get("uuid") or "",
+                              "procesado": False, "origen": "venta"},
                 )
-            continue
+                raise ValueError(f"[{folio}] Producto '{nombre}' no encontrado.")
+            if err == "ambiguous":
+                raise ValueError(f"[{folio}] Producto '{nombre}' ambiguo.")
 
-        producto = _resolver_producto(nombre)
+            # Precio unitario
+            try:
+                precio_unitario = Decimal(str(raw_pu)) if str(raw_pu).strip() != "" else (producto.precio_venta or Decimal("0"))
+            except InvalidOperation:
+                precio_unitario = producto.precio_venta or Decimal("0")
 
-        if producto:
             DetalleFactura.objects.create(
                 factura=factura,
                 producto=producto,
-                cantidad=int(cantidad),            # tu modelo usa IntegerField
-                precio_unitario=precio_unitario,   # ya trae impuestos (según extractor)
-                # precio_compra se llena en save() desde producto.precio_compra
+                cantidad=cantidad,
+                precio_unitario=precio_unitario,
             )
             detalles_creados += 1
-        else:
-            # Guardamos el nombre para que lo conviertas en alias desde el Admin
-            ProductoNoReconocido.objects.get_or_create(
-                nombre_detectado=nombre,
-                defaults={
-                    "fecha_detectado": now(),
-                    "uuid_factura": datos.get("uuid") or "",
-                    "procesado": False,
-                    "origen": "venta",
-                },
-            )
 
-    # ✅ Solo recalcular si hubo al menos un detalle creado.
-    if detalles_creados > 0:
-        factura.calcular_total()
-    # si no hubo detalles, se conserva el total extraído (no lo pisamos con 0)
+        if detalles_creados == 0:
+            factura.total = total_decimal
+            factura.save(update_fields=["total"])
 
-    return factura
+        return factura

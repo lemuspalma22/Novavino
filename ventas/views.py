@@ -1,200 +1,58 @@
-from django.http import HttpResponse, JsonResponse
-from inventario.models import Producto
-from django.shortcuts import render
-from .models import Factura, DetalleFactura
 from datetime import datetime
-import csv  # Importar csv para exportación a CSV
-from reportlab.lib.pagesizes import letter  # Importar report lab para PDF
-from reportlab.pdfgen import canvas
+import csv
+
+from django.db.models import F, Sum
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, Http404
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
-def get_producto_precio(request, producto_id):
-    try:
-        producto = Producto.objects.get(id=producto_id)
-        return JsonResponse({"precio_unitario": str(producto.precio_venta)})
-    except Producto.DoesNotExist:
-        return JsonResponse({"error": "Producto no encontrado"}, status=404)
+from inventario.models import Producto
+from .models import Factura
 
-def _parse_date(s: str):
-    if not s:
+
+# ----------------------------- utilidades -----------------------------
+
+def _parse_date_html(value: str):
+    if not value:
         return None
     try:
-        # Inputs type="date" llegan como YYYY-MM-DD
-        return datetime.strptime(s, "%Y-%m-%d").date()
+        # inputs type="date"
+        return datetime.strptime(value, "%Y-%m-%d").date()
     except Exception:
         return None
 
-@require_http_methods(["GET", "POST"])
-def corte_semanal(request):
-    """
-    GET  con ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD  -> JSON (para el fetch)
-    POST con fecha_inicio/fecha_fin                      -> JSON (compatibilidad)
-    GET sin parámetros                                   -> render del template
-    """
-    # 1) Leer parámetros (soporta ambos nombres y métodos)
-    start_raw = request.GET.get("start_date") or request.POST.get("fecha_inicio")
-    end_raw   = request.GET.get("end_date")   or request.POST.get("fecha_fin")
 
-    start_date = _parse_date(start_raw)
-    end_date   = _parse_date(end_raw)
+def _rangos(request):
+    # Soporta nombres usados en tu template actual
+    fi = _parse_date_html(request.GET.get("fecha_inicio") or request.GET.get("start_date"))
+    ff = _parse_date_html(request.GET.get("fecha_fin") or request.GET.get("end_date"))
+    return fi, ff
 
-    # Si no hay fechas: render normal del template (carga inicial de la página)
-    if not (start_date and end_date):
-        return render(request, "ventas/corte_semanal.html")
 
-    # 2) Query (optimizada con prefetch)
-    facturas = (
-        Factura.objects
-        .filter(fecha_facturacion__range=[start_date, end_date])
-        .prefetch_related("detalles__producto")
+def _totales(qs):
+    # costo = sum(precio_compra * cantidad)
+    costo_total = (
+        qs.aggregate(
+            s=Sum(F("detalles__precio_compra") * F("detalles__cantidad"))
+        )["s"]
+        or 0
     )
-
-    # 3) Acumuladores
-    total_venta = 0
-    total_costo_proveedores = 0
-    total_ganancia = 0
-    total_productos_personalizados = {}
-    total_productos_no_personalizados = {}
-
-    reporte = []
-
-    for factura in facturas:
-        # Costo de proveedores por factura
-        costo_proveedores = sum(
-            (det.cantidad or 0) * (det.precio_compra or 0)
-            for det in factura.detalles.all()
-        )
-        ganancia = (factura.total or 0) - costo_proveedores
-
-        # Diccionarios por factura
-        productos_personalizados = {}
-        productos_no_personalizados = {}
-
-        for det in factura.detalles.all():
-            producto = det.producto
-            cantidad = det.cantidad or 0
-            if getattr(producto, "es_personalizado", False):
-                productos_personalizados[producto.nombre] = (
-                    productos_personalizados.get(producto.nombre, 0) + cantidad
-                )
-                total_productos_personalizados[producto.nombre] = (
-                    total_productos_personalizados.get(producto.nombre, 0) + cantidad
-                )
-            else:
-                productos_no_personalizados[producto.nombre] = (
-                    productos_no_personalizados.get(producto.nombre, 0) + cantidad
-                )
-                total_productos_no_personalizados[producto.nombre] = (
-                    total_productos_no_personalizados.get(producto.nombre, 0) + cantidad
-                )
-
-        reporte.append({
-            "folio": getattr(factura, "folio_factura", ""),
-            # Si cliente es FK, lo convertimos a string legible
-            "cliente": str(getattr(factura, "cliente", "")),
-            "fecha": factura.fecha_facturacion.strftime("%d-%b-%Y"),
-            "total_venta": factura.total or 0,
-            "costo_proveedores": costo_proveedores,
-            "ganancia": ganancia,
-            "productos_personalizados": productos_personalizados or "Ninguno",
-            "productos_no_personalizados": productos_no_personalizados or "Ninguno",
-        })
-
-        total_venta += (factura.total or 0)
-        total_costo_proveedores += costo_proveedores
-        total_ganancia += ganancia
-
-    return JsonResponse({
-        "reporte": reporte,
-        "totales": {
-            "total_venta": total_venta,
-            "total_costo_proveedores": total_costo_proveedores,
-            "total_ganancia": total_ganancia,
-            "productos_personalizados": total_productos_personalizados or "Ninguno",
-            "productos_no_personalizados": total_productos_no_personalizados or "Ninguno",
-        }
-    })
+    total_venta = qs.aggregate(s=Sum("total"))["s"] or 0
+    return total_venta, costo_total, (total_venta - costo_total)
 
 
-def exportar_csv(request):
-    fecha_inicio = request.GET.get("fecha_inicio")
-    fecha_fin = request.GET.get("fecha_fin")
+# ----------------------------- API pequeña -----------------------------
 
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="corte_semanal.csv"'
-    
-    writer = csv.writer(response)
-    writer.writerow(["Folio", "Cliente", "Fecha", "Total Venta", "Costo Proveedores", "Ganancia", "Productos Personalizados", "Productos No Personalizados"])
-
-    facturas = Factura.objects.filter(fecha_facturacion__range=[fecha_inicio, fecha_fin])
-    
-    for factura in facturas:
-        costo_proveedores = sum(detalle.cantidad * detalle.precio_compra for detalle in factura.detalles.all())
-        ganancia = factura.total - costo_proveedores
-
-        productos_personalizados = sum(
-            detalle.cantidad for detalle in factura.detalles.all() if detalle.producto.es_personalizado
-        )
-        productos_no_personalizados = sum(
-            detalle.cantidad for detalle in factura.detalles.all() if not detalle.producto.es_personalizado
-        )
-
-        writer.writerow([
-            factura.folio_factura,
-            factura.cliente,
-            factura.fecha_facturacion.strftime("%d-%b-%Y"),
-            factura.total,
-            costo_proveedores,
-            ganancia,
-            productos_personalizados,
-            productos_no_personalizados
-        ])
-
-    return response
-
-
-def exportar_pdf(request):
-    fecha_inicio = request.GET.get("fecha_inicio")
-    fecha_fin = request.GET.get("fecha_fin")
-
-    if not fecha_inicio or not fecha_fin:
-        return HttpResponse("Error: Debes proporcionar un rango de fechas válido en el formato YYYY-MM-DD.", status=400)
-
+def get_producto_precio(request, producto_id):
     try:
-        fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
-        fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
-    except ValueError:
-        return HttpResponse("Error: Formato de fecha inválido. Debe ser YYYY-MM-DD.", status=400)
+        p = Producto.objects.get(id=producto_id)
+        return JsonResponse({"precio_unitario": str(p.precio_venta)})
+    except Producto.DoesNotExist:
+        return JsonResponse({"error": "Producto no encontrado"}, status=404)
 
-    facturas = Factura.objects.filter(fecha_facturacion__range=[fecha_inicio, fecha_fin])
-
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="corte_semanal.pdf"'
-    
-    p = canvas.Canvas(response, pagesize=letter)
-    p.drawString(100, 750, "Reporte de Corte Semanal")
-
-    y = 730
-    for factura in facturas:
-        costo_proveedores = sum(detalle.cantidad * detalle.precio_compra for detalle in factura.detalles.all())
-        ganancia = factura.total - costo_proveedores
-
-        productos_personalizados = sum(
-            detalle.cantidad for detalle in factura.detalles.all() if detalle.producto.es_personalizado
-        )
-        productos_no_personalizados = sum(
-            detalle.cantidad for detalle in factura.detalles.all() if not detalle.producto.es_personalizado
-        )
-
-        p.drawString(100, y, f"Factura {factura.folio_factura} - Cliente: {factura.cliente}")
-        p.drawString(100, y-15, f"Total: {factura.total} | Costo Proveedores: {costo_proveedores} | Ganancia: {ganancia}")
-        p.drawString(100, y-30, f"Personalizados: {productos_personalizados} | No Personalizados: {productos_no_personalizados}")
-        y -= 50
-
-    p.showPage()
-    p.save()
-    return response
 
 def api_producto_precios(request, pk: int):
     try:
@@ -202,11 +60,233 @@ def api_producto_precios(request, pk: int):
     except Producto.DoesNotExist:
         raise Http404("Producto no encontrado")
 
-    # Ajusta los nombres de campo si en tu modelo se llaman diferente
     precio_venta = getattr(p, "precio_unitario", None) or getattr(p, "precio_venta", 0) or 0
     precio_compra = getattr(p, "precio_compra", 0) or 0
+    return JsonResponse({"precio_venta": float(precio_venta), "precio_compra": float(precio_compra)})
+
+
+# ----------------------------- Cortes -----------------------------
+
+@require_http_methods(["GET"])
+def corte_contable(request):
+    """Corte por fecha de FACTURACIÓN."""
+    fi, ff = _rangos(request)
+    qs = Factura.objects.all()
+    if fi and ff:
+        qs = qs.filter(fecha_facturacion__range=(fi, ff))
+    qs = qs.prefetch_related("detalles__producto")
+
+    # Armar reporte (estructura compatible con tu template actual)
+    reporte = []
+    for f in qs:
+        costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
+        ganancia = (f.total or 0) - costo
+        pers, no_pers = {}, {}
+        for d in f.detalles.all():
+            key = d.producto.nombre
+            bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
+            bucket[key] = bucket.get(key, 0) + (d.cantidad or 0)
+
+        reporte.append({
+            "folio": f.folio_factura,
+            "cliente": str(f.cliente),
+            "fecha": f.fecha_facturacion.strftime("%d-%b-%Y"),
+            "total_venta": f.total or 0,
+            "costo_proveedores": costo,
+            "ganancia": ganancia,
+            "productos_personalizados": pers or "Ninguno",
+            "productos_no_personalizados": no_pers or "Ninguno",
+        })
+
+    tot_vta, tot_costo, tot_gan = _totales(qs)
+    return render(request, "ventas/corte.html", {
+        "modo": "contable",
+        "facturas": qs,
+        "reporte": reporte,
+        "fi": fi, "ff": ff,
+        "totales": {
+            "total_venta": tot_vta,
+            "total_costo_proveedores": tot_costo,
+            "total_ganancia": tot_gan,
+        },
+    })
+
+
+@require_http_methods(["GET"])
+def corte_flujo(request):
+    """Corte por fecha de PAGO (solo pagadas)."""
+    fi, ff = _rangos(request)
+    qs = Factura.objects.filter(pagado=True)
+    if fi and ff:
+        qs = qs.filter(fecha_pago__range=(fi, ff))
+    qs = qs.prefetch_related("detalles__producto")
+
+    reporte = []
+    for f in qs:
+        costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
+        ganancia = (f.total or 0) - costo
+        pers, no_pers = {}, {}
+        for d in f.detalles.all():
+            key = d.producto.nombre
+            bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
+            bucket[key] = bucket.get(key, 0) + (d.cantidad or 0)
+
+        reporte.append({
+            "folio": f.folio_factura,
+            "cliente": str(f.cliente),
+            "fecha": f.fecha_pago.strftime("%d-%b-%Y") if f.fecha_pago else "",
+            "total_venta": f.total or 0,
+            "costo_proveedores": costo,
+            "ganancia": ganancia,
+            "productos_personalizados": pers or "Ninguno",
+            "productos_no_personalizados": no_pers or "Ninguno",
+        })
+
+    tot_vta, tot_costo, tot_gan = _totales(qs)
+    return render(request, "ventas/corte.html", {
+        "modo": "flujo",
+        "facturas": qs,
+        "reporte": reporte,
+        "fi": fi, "ff": ff,
+        "totales": {
+            "total_venta": tot_vta,
+            "total_costo_proveedores": tot_costo,
+            "total_ganancia": tot_gan,
+        },
+    })
+
+
+# ----------------------------- Exportaciones -----------------------------
+
+def _facturas_para_export(fecha_inicio, fecha_fin, modo: str):
+    if modo == "flujo":
+        qs = Factura.objects.filter(pagado=True)
+        qs = qs.filter(fecha_pago__range=(fecha_inicio, fecha_fin))
+    else:
+        qs = Factura.objects.filter(fecha_facturacion__range=(fecha_inicio, fecha_fin))
+    return qs.prefetch_related("detalles__producto")
+
+
+def exportar_csv(request):
+    modo = request.GET.get("modo", "contable")  # 'contable' | 'flujo'
+    fi = _parse_date_html(request.GET.get("fecha_inicio"))
+    ff = _parse_date_html(request.GET.get("fecha_fin"))
+    if not (fi and ff):
+        return HttpResponse("Rango de fechas inválido", status=400)
+
+    qs = _facturas_para_export(fi, ff, modo)
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="corte_{modo}.csv"'
+    w = csv.writer(response)
+    w.writerow(["Folio", "Cliente", "Fecha", "Total Venta", "Costo Proveedores",
+                "Ganancia", "Productos Personalizados", "Productos No Personalizados"])
+
+    for f in qs:
+        costo = sum(d.cantidad * d.precio_compra for d in f.detalles.all())
+        gan = (f.total or 0) - costo
+        pers = sum(d.cantidad for d in f.detalles.all() if getattr(d.producto, "es_personalizado", False))
+        no_pers = sum(d.cantidad for d in f.detalles.all() if not getattr(d.producto, "es_personalizado", False))
+        fecha = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
+        w.writerow([f.folio_factura, f.cliente, fecha, f.total, costo, gan, pers, no_pers])
+
+    return response
+
+
+def exportar_pdf(request):
+    modo = request.GET.get("modo", "contable")
+    fi = _parse_date_html(request.GET.get("fecha_inicio"))
+    ff = _parse_date_html(request.GET.get("fecha_fin"))
+    if not (fi and ff):
+        return HttpResponse("Rango de fechas inválido", status=400)
+
+    qs = _facturas_para_export(fi, ff, modo)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="corte_{modo}.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    titulo = "Corte por Fecha de Pago (Flujo)" if modo == "flujo" else "Corte por Fecha de Factura (Contable)"
+    p.drawString(80, 750, titulo)
+
+    y = 730
+    for f in qs:
+        costo = sum(d.cantidad * d.precio_compra for d in f.detalles.all())
+        gan = (f.total or 0) - costo
+        fecha = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
+
+        p.drawString(80, y, f"Factura {f.folio_factura} - Cliente: {f.cliente}")
+        p.drawString(80, y-15, f"Fecha: {fecha}  |  Total: {f.total}  |  Costo: {costo}  |  Ganancia: {gan}")
+        y -= 40
+        if y < 80:
+            p.showPage()
+            y = 750
+
+    p.showPage()
+    p.save()
+    return response
+
+def corte_semanal_page(request):
+    return render(request, "ventas/corte_semanal.html")
+
+# --- API JSON que consume el template con fetch ---
+from django.views.decorators.http import require_http_methods
+
+@require_http_methods(["GET"])
+def corte_semanal(request):
+    """
+    API JSON.
+    modo=contable -> fecha_facturacion (todas)
+    modo=flujo    -> fecha_pago (solo pagadas)
+    """
+    modo = (request.GET.get("modo") or "contable").strip().lower()
+    if modo not in ("contable", "flujo"):
+        modo = "contable"
+
+    # Tu template manda start_date/end_date (o fecha_inicio/fecha_fin)
+    fi, ff = _rangos(request)
+    if not (fi and ff):
+        return JsonResponse({"error": "Rango de fechas inválido"}, status=400)
+
+    if modo == "flujo":
+        qs = Factura.objects.filter(pagado=True, fecha_pago__range=(fi, ff))
+    else:
+        qs = Factura.objects.filter(fecha_facturacion__range=(fi, ff))
+
+    qs = qs.prefetch_related("detalles__producto")
+
+    reporte = []
+    for f in qs:
+        costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
+        ganancia = (f.total or 0) - costo
+        pers, no_pers = {}, {}
+        for d in f.detalles.all():
+            nombre = d.producto.nombre
+            bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
+            bucket[nombre] = bucket.get(nombre, 0) + (d.cantidad or 0)
+
+        fecha_txt = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
+
+        reporte.append({
+            "folio": f.folio_factura,
+            "cliente": str(f.cliente),
+            "fecha": fecha_txt,
+            "total_venta": float(f.total or 0),
+            "costo_proveedores": float(costo),
+            "ganancia": float(ganancia),
+            "productos_personalizados": pers or "Ninguno",
+            "productos_no_personalizados": no_pers or "Ninguno",
+        })
+
+    tot_vta, tot_costo, tot_gan = _totales(qs)
 
     return JsonResponse({
-        "precio_venta": float(precio_venta),
-        "precio_compra": float(precio_compra),
+        "modo": modo,
+        "reporte": reporte,
+        "totales": {
+            "total_venta": float(tot_vta),
+            "total_costo_proveedores": float(tot_costo),
+            "total_ganancia": float(tot_gan),
+            "productos_personalizados": "Ninguno",
+            "productos_no_personalizados": "Ninguno",
+        },
     })

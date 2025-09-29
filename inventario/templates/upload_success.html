@@ -1,0 +1,16 @@
+<h1>Productos cargados</h1>
+<p>Creados: {{ creados }} | Actualizados: {{ actualizados }}</p>
+
+{% if errores %}
+  <h3>Errores:</h3>
+  <ul>
+    {% for e in errores %}
+      <li>{{ e }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Todo se procesó correctamente.</p>
+{% endif %}
+
+<p><a href="{% url 'upload_csv' %}">⬅️ Volver a subir otro CSV</a></p>
+<p><a href="{% url 'upload_stock_csv' %}">📥 Ir a actualizar stock</a></p>

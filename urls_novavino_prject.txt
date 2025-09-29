@@ -1,0 +1,8 @@
+Cargar productos masivamente:
+http://127.0.0.1:8000/inventario/upload_csv/
+
+Ajustar stock desde conteo físico:
+http://127.0.0.1:8000/inventario/upload_stock_csv/
+
+Exportar plantilla con todos los productos:
+http://127.0.0.1:8000/inventario/exportar_plantilla_csv/

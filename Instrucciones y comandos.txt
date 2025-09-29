@@ -21,4 +21,6 @@
 	python manage.py runserver
 	Ruta: http://127.0.0.1:8000/admin/
 
+- Back Up (por ejemplo de inventario) [Bash]
+$ python manage.py dumpdata inventario --indent 2 > backup_inventario.json
 

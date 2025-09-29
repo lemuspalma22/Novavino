@@ -1,6 +1,8 @@
 from django.db import models
 from compras.models import Proveedor  # Importamos el modelo de Proveedor
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -17,11 +19,30 @@ class Producto(models.Model):
         return f"{self.nombre} - {self.tipo if self.tipo else 'Sin tipo definido'}"
 
 class AliasProducto(models.Model):
-    alias = models.CharField(max_length=200, unique=True)
+    alias = models.CharField(max_length=255, unique=False)  # dejamos unique=False y ponemos UniqueConstraint CI abajo
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="aliases")
 
-    def __str__(self):
-        return f"{self.alias} → {self.producto.nombre}"
+    def clean(self):
+        """Evita cruces: alias igual a nombre de otro producto distinto."""
+        texto = (self.alias or "").strip()
+        if not texto:
+            return
+        # ¿existe un producto con ese nombre?
+        p = Producto.objects.filter(nombre__iexact=texto).first()
+        if p and p.pk != getattr(self.producto, "pk", None):
+            raise ValidationError(
+                {"alias": f"El alias '{texto}' coincide con el nombre del producto '{p.nombre}'. "
+                          f"No puede apuntar a un producto distinto."}
+            )
+
+    class Meta:
+        constraints = [
+            # Unicidad case-insensitive de alias (no puede existir el mismo alias para dos filas)
+            models.UniqueConstraint(
+                Lower("alias"),
+                name="uniq_alias_ci"
+            ),
+        ]
 
 class Inventario(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

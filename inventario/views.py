@@ -6,7 +6,8 @@ from django.shortcuts import render
 from .models import Producto
 from compras.models import Proveedor
 from .forms import CSVUploadForm
-from .utils import encontrar_producto
+from .utils import encontrar_producto_unico
+
 
 # --- Exportar plantilla CSV con todos los productos ---
 def export_product_template_csv(request):
@@ -50,11 +51,14 @@ def upload_stock_csv(request):
                 if not raw_nombre:
                     continue
 
-                prod = encontrar_producto(raw_nombre)
-                if not prod:
-                    no_encontrados.append(raw_nombre)
+                prod, err = encontrar_producto_unico(raw_nombre)
+                if err == "not_found":
+                    no_encontrados.append(f"{raw_nombre} (no encontrado)")
                     continue
-
+                if err == "ambiguous":
+                    no_encontrados.append(f"{raw_nombre} (ambigüo: coincide con varios productos/alias)")
+                    continue
+                
                 try:
                     nuevo_stock = int(Decimal(raw_stock))
                 except (InvalidOperation, ValueError):
