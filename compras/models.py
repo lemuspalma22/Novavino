@@ -26,6 +26,19 @@ class Compra(models.Model):
     fecha_pago = models.DateField(null=True, blank=True)
     complemento_pago = models.CharField(max_length=100, null=True, blank=True)
     notas = models.TextField(null=True, blank=True)
+    
+    # Campos de revisión manual
+    requiere_revision_manual = models.BooleanField(default=False, help_text="Indica si la compra requiere revisión humana")
+    estado_revision = models.CharField(
+        max_length=20,
+        choices=[
+            ("pendiente", "Pendiente"),
+            ("revisado_ok", "Revisado OK"),
+            ("revisado_con_cambios", "Revisado con cambios")
+        ],
+        default="pendiente",
+        help_text="Estado de la revisión manual"
+    )
 
     @property
     def estado(self):
@@ -42,6 +55,10 @@ class CompraProducto(models.Model):
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     detectado_como = models.CharField(max_length=200, null=True, blank=True)
+    
+    # Campos de revisión manual
+    requiere_revision_manual = models.BooleanField(default=False, help_text="Indica si esta línea requiere revisión")
+    motivo_revision = models.CharField(max_length=255, blank=True, help_text="Motivos por los que requiere revisión")
 
     def subtotal(self):
         return self.cantidad * self.precio_unitario

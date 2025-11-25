@@ -3,6 +3,7 @@ from django.shortcuts import render
 from .models import Compra
 from compras.models import CompraProducto
 from datetime import datetime
+from utils.reportes import calcular_agregados_periodo_compras
 
 def compras_pagadas_vista(request):
     compras_pagadas = []
@@ -35,24 +36,41 @@ def corte_compras(request):
     productos_personalizados = 0
     productos_no_personalizados = 0
 
-    if request.method == "GET" and "fecha_inicio" in request.GET and "fecha_fin" in request.GET:
+    # Debug: imprimir parámetros recibidos
+    print(f"DEBUG - request.GET: {request.GET}")
+    print(f"DEBUG - fecha_inicio: {request.GET.get('fecha_inicio')}")
+    print(f"DEBUG - fecha_fin: {request.GET.get('fecha_fin')}")
+
+    if request.method == "GET" and request.GET.get("fecha_inicio") and request.GET.get("fecha_fin"):
         fecha_inicio = request.GET.get("fecha_inicio")
         fecha_fin = request.GET.get("fecha_fin")
+        
+        print(f"DEBUG - Procesando fechas: {fecha_inicio} a {fecha_fin}")
 
-        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
-        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        try:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+            
+            print(f"DEBUG - Fechas parseadas: {fecha_inicio_dt} a {fecha_fin_dt}")
 
-        compras = CompraProducto.objects.filter(
-            compra__fecha__range=(fecha_inicio_dt, fecha_fin_dt)
-        ).select_related('producto', 'compra')
-
-        for producto in compras:
-            subtotal = producto.subtotal()
-            total_gastado += float(subtotal)
-            if producto.producto.es_personalizado:
-                productos_personalizados += producto.cantidad
-            else:
-                productos_no_personalizados += producto.cantidad
+            # Usar la nueva función abstraída
+            agregados = calcular_agregados_periodo_compras(
+                CompraProducto.objects.all(),
+                fecha_inicio_dt,
+                fecha_fin_dt
+            )
+            
+            print(f"DEBUG - Agregados: {agregados}")
+            
+            compras = agregados['queryset']
+            total_gastado = agregados['total_gastado']
+            productos_personalizados = agregados['productos_personalizados']
+            productos_no_personalizados = agregados['productos_no_personalizados']
+            
+            print(f"DEBUG - Compras encontradas: {len(compras)}")
+            
+        except Exception as e:
+            print(f"DEBUG - Error: {e}")
 
     contexto = {
         "compras": compras,

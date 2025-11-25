@@ -1,3 +1,5 @@
+import dotenv
+dotenv.load_dotenv()
 import os
 import tempfile
 import traceback  
@@ -8,6 +10,8 @@ from decimal import Decimal, InvalidOperation
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from django.utils import timezone
+from pydrive2.auth import RefreshError
+
 
 # === Django setup ===
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "crm_project.settings")
@@ -26,17 +30,36 @@ RENAME_ON_MOVE = True
 
 def get_drive():
     gauth = GoogleAuth("settings.yaml")
-    gauth.LoadCredentialsFile("token.json")
-    if gauth.credentials is None:
-        gauth.LocalWebserverAuth()
-    else:
-        try:
-            if gauth.access_token_expired:
-                gauth.Refresh()
-            else:
-                gauth.Authorize()
-        except Exception:
+
+    # Cargar credenciales previas si existen
+    try:
+        gauth.LoadCredentialsFile("token.json")
+    except Exception:
+        pass
+
+    try:
+        if gauth.credentials is None:
+            # No hay token -> flujo local con navegador
             gauth.LocalWebserverAuth()
+        else:
+            try:
+                # Hay token -> intenta refrescar
+                if gauth.access_token_expired:
+                    gauth.Refresh()
+                else:
+                    gauth.Authorize()
+            except RefreshError:
+                # Token inválido/revocado -> borra y reautentica
+                try:
+                    os.remove("token.json")
+                except Exception:
+                    pass
+                gauth.LocalWebserverAuth()
+    except Exception:
+        # Fallback “sin navegador” (por si hay algún bloqueo del puerto localhost)
+        gauth.CommandLineAuth()
+
+    # Guarda credenciales buenas
     gauth.SaveCredentialsFile("token.json")
     return GoogleDrive(gauth)
 

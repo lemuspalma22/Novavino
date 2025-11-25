@@ -1,6 +1,10 @@
 from django.contrib import admin
+from django.utils.html import format_html
+from django.urls import path
+from django.middleware.csrf import get_token
 from .models import Compra, Proveedor, CompraProducto
-from inventario.models import Producto  # Importamos Producto para manejarlo en el admin
+from inventario.models import Producto, ProductoNoReconocido
+from .views_pnr import asignar_pnr_view, crear_producto_pnr_view
 
 # Mostrar productos relacionados dentro del proveedor en el admin
 class ProductoInline(admin.TabularInline):
@@ -26,10 +30,285 @@ class ProveedorAdmin(admin.ModelAdmin):
 
 # Personalización del admin de CompraProducto
 class CompraProductoAdmin(admin.ModelAdmin):
-    list_display = ("compra", "producto", "cantidad", "precio_unitario")
-    search_fields = ("producto__nombre", "compra__folio")
+    list_display = ("compra", "producto", "cantidad", "precio_unitario", "flag_revision", "motivo_revision")
+    list_filter = ("requiere_revision_manual",)
+    search_fields = ("producto__nombre", "compra__folio", "motivo_revision")
+    readonly_fields = ("flag_revision",)
+    
+    def flag_revision(self, obj):
+        """Muestra icono de alerta si requiere revisión."""
+        if obj.requiere_revision_manual:
+            return format_html('<span style="font-size: 1.5em; color: #f39c12;">⚠️</span>')
+        return format_html('<span style="color: #27ae60;">✓</span>')
+    flag_revision.short_description = "Estado"
+
+# Personalización del admin de Compra
+class CompraAdmin(admin.ModelAdmin):
+    list_display = ("folio", "proveedor", "fecha", "total", "estado_detallado", "pagado")
+    list_filter = ("requiere_revision_manual", "estado_revision", "pagado", "proveedor")
+    search_fields = ("folio", "uuid", "proveedor__nombre")
+    readonly_fields = ("resumen_revision",)
+    actions = ["marcar_revisado_ok", "marcar_revisado_con_cambios"]
+    fieldsets = (
+        ("Información general", {
+            "fields": ("folio", "proveedor", "fecha", "total", "uuid", "archivo", "pagado", "fecha_pago", "complemento_pago", "notas")
+        }),
+        ("Estado de revisión", {
+            "fields": ("resumen_revision", "requiere_revision_manual", "estado_revision"),
+            "classes": ("wide",),
+        }),
+    )
+    
+    def estado_detallado(self, obj):
+        """Muestra estado resumido con conteo de líneas con flags."""
+        lineas_con_flags = obj.productos.filter(requiere_revision_manual=True).count()
+        
+        if obj.requiere_revision_manual:
+            if obj.estado_revision == "pendiente":
+                icono = '<span style="font-size: 1.2em; color: #e74c3c;">⚠️</span>'
+                texto = f"Pendiente ({lineas_con_flags} líneas)" if lineas_con_flags > 0 else "Pendiente"
+                return format_html(f'{icono} {texto}')
+            elif obj.estado_revision == "revisado_con_cambios":
+                icono = '<span style="font-size: 1.2em; color: #f39c12;">⚠️</span>'
+                return format_html(f'{icono} Revisado con cambios')
+            else:
+                icono = '<span style="color: #27ae60;">✓</span>'
+                return format_html(f'{icono} Revisado OK')
+        icono = '<span style="color: #27ae60;">✓</span>'
+        return format_html(f'{icono} OK')
+    estado_detallado.short_description = "Estado revisión"
+    
+    def get_urls(self):
+        """Registrar URLs custom para procesar PNR."""
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:object_id>/asignar_pnr/', self.admin_site.admin_view(asignar_pnr_view), name='compras_compra_asignar_pnr'),
+            path('<int:object_id>/crear_producto_pnr/', self.admin_site.admin_view(crear_producto_pnr_view), name='compras_compra_crear_producto_pnr'),
+        ]
+        return custom_urls + urls
+    
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """Guardar request para que readonly_fields puedan acceder a él."""
+        self._current_request = request
+        return super().change_view(request, object_id, form_url, extra_context)
+    
+    def resumen_revision(self, obj):
+        """Widget de resumen de revisión en el detalle de la compra."""
+        if not obj.pk:
+            return "-"
+        
+        try:
+            return self._render_resumen_widget(obj)
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"\n{'='*80}\nERROR EN WIDGET resumen_revision:\n{error_details}\n{'='*80}\n")
+            return format_html(
+                '<div style="padding: 15px; border: 2px solid #e74c3c; background-color: #ffe6e6; border-radius: 5px;">'
+                '<p style="color: #c0392b; font-weight: bold;">⚠️ Error al cargar el widget de revisión</p>'
+                f'<p style="color: #666; font-size: 0.9em;">Error: {str(e)}</p>'
+                f'<pre style="font-size: 0.75em; background: #f5f5f5; padding: 10px; overflow-x: auto;">{error_details[:1000]}</pre>'
+                '</div>'
+            )
+    resumen_revision.short_description = "Resumen del estado de revisión"
+    
+    def _render_resumen_widget(self, obj):
+        """Renderiza el contenido del widget (separado para mejor debugging)."""
+        # Obtener request del change_view
+        request = getattr(self, '_current_request', None)
+        if not request:
+            return format_html('<p style="color: #c0392b;">Error: No se pudo obtener el request para generar el widget.</p>')
+        
+        # Contar líneas con flags y recolectar motivos
+        lineas_con_flags = obj.productos.filter(requiere_revision_manual=True)
+        num_lineas_flags = lineas_con_flags.count()
+        
+        # Contar PNR asociados por UUID
+        pnr_pendientes = ProductoNoReconocido.objects.filter(
+            uuid_factura=obj.uuid,
+            procesado=False
+        )
+        num_pnr = pnr_pendientes.count()
+        
+        # Construir HTML del resumen
+        estado_class = "error" if (num_lineas_flags > 0 or num_pnr > 0) else "success"
+        icono = "⚠️" if (num_lineas_flags > 0 or num_pnr > 0) else "✓"
+        
+        html_parts = [
+            f'<div style="padding: 15px; border: 2px solid {"#e74c3c" if estado_class == "error" else "#27ae60"}; '
+            f'border-radius: 5px; background-color: {"#ffe6e6" if estado_class == "error" else "#e8f8f5"}; margin-bottom: 15px;">',
+            f'<h3 style="margin-top: 0; color: {"#c0392b" if estado_class == "error" else "#229954"};">{icono} Resumen de revisión</h3>',
+        ]
+        
+        # Líneas con flags
+        if num_lineas_flags > 0:
+            html_parts.append(f'<p style="margin: 8px 0;"><strong>⚠️ Líneas con flags:</strong> {num_lineas_flags}</p>')
+            html_parts.append('<ul style="margin: 5px 0; padding-left: 20px;">')
+            for linea in lineas_con_flags[:10]:  # Limitar a 10 para no saturar
+                motivos = linea.motivo_revision or "sin motivo especificado"
+                html_parts.append(f'<li>{linea.producto.nombre}: <em>{motivos}</em></li>')
+            if num_lineas_flags > 10:
+                html_parts.append(f'<li><em>... y {num_lineas_flags - 10} más</em></li>')
+            html_parts.append('</ul>')
+        else:
+            html_parts.append('<p style="margin: 8px 0;"><strong>✓ Líneas con flags:</strong> 0</p>')
+        
+        # PNR pendientes con formularios interactivos
+        if num_pnr > 0:
+            html_parts.append(f'<p style="margin: 8px 0; margin-top: 15px;"><strong>⚠️ Productos no reconocidos sin procesar:</strong> {num_pnr}</p>')
+            
+            # Cargar productos para dropdowns (limitado para performance)
+            productos_disponibles = list(Producto.objects.all().order_by("nombre")[:500])
+            
+            for idx, pnr in enumerate(pnr_pendientes[:10], 1):
+                cantidad = pnr.cantidad or 0
+                precio_u = pnr.precio_unitario or 0
+                importe = cantidad * precio_u
+                
+                # Contenedor del PNR
+                html_parts.append(
+                    f'<div style="border: 1px solid #ddd; padding: 12px; margin: 10px 0; background: #fff; border-radius: 4px;">'
+                    f'<div style="margin-bottom: 10px;">'
+                    f'<strong style="color: #333; font-size: 0.95em;">{idx}. {pnr.nombre_detectado}</strong><br>'
+                    f'<small style="color: #666;">Cant: <strong>{cantidad}</strong> | P/U: <strong>${precio_u:,.2f}</strong> | Importe: <strong>${importe:,.2f}</strong></small>'
+                    f'</div>'
+                    f'<div style="display: flex; gap: 15px; flex-wrap: wrap;">'
+                )
+                
+                # Formulario 1: Asignar a existente (div con JavaScript, NO form anidado)
+                csrf_token = get_token(request)
+                pnr_id_val = pnr.id
+                obj_id_val = obj.id
+                html_parts.append(
+                    f'<div style="flex: 1; min-width: 250px;">'
+                    f'<label style="display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 4px; color: #555;">Asignar a producto existente:</label>'
+                    f'<select id="producto_id_{pnr_id_val}" required style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 3px;">'
+                    f'<option value="">-- Selecciona producto --</option>'
+                )
+                
+                for prod in productos_disponibles:
+                    html_parts.append(f'<option value="{prod.id}">{prod.nombre}</option>')
+                
+                # Usar atributos data- para evitar problemas de escapado en onclick
+                html_parts.append(
+                    f'</select>'
+                    f'<label style="font-size: 0.8em; display: block; margin: 6px 0; color: #666;">'
+                    f'<input type="checkbox" id="crear_alias_{pnr_id_val}" checked style="margin-right: 4px;" /> Crear alias automáticamente'
+                    f'</label>'
+                    f'<button type="button" '
+                    f'data-pnr-id="{pnr_id_val}" '
+                    f'data-compra-id="{obj_id_val}" '
+                    f'data-csrf="{csrf_token}" '
+                    f'onclick="asignarPNR(this)" '
+                    f'style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold;">'
+                    f'✓ Asignar'
+                    f'</button>'
+                    f'</div>'
+                )
+                
+                # Formulario 2: Crear nuevo producto (TEMPORALMENTE DESHABILITADO para debugging)
+                html_parts.append(
+                    f'<div style="flex: 1; min-width: 250px;">'
+                    f'<p style="padding: 10px; border: 1px solid #ccc; background: #f9f9f9; color: #666; font-size: 0.85em; border-radius: 4px;">'
+                    f'<strong>Crear producto nuevo:</strong><br>'
+                    f'Función temporalmente deshabilitada. Usa el formulario de asignación.'
+                    f'</p>'
+                    f'</div>'
+                )
+                
+                html_parts.append('</div></div>')  # Cerrar flex y contenedor PNR
+            
+            if num_pnr > 10:
+                html_parts.append(f'<p style="margin: 10px 0; color: #888; font-size: 0.9em; font-style: italic;">... y {num_pnr - 10} más (procesa estos primero para ver el resto)</p>')
+        else:
+            html_parts.append('<p style="margin: 8px 0;"><strong>✓ Productos no reconocidos:</strong> 0 pendientes</p>')
+        
+        # Lista de productos detectados (para verificar que el extractor capturó todo)
+        productos_compra = obj.productos.all()
+        num_productos = productos_compra.count()
+        
+        if num_productos > 0:
+            html_parts.append(f'<p style="margin: 8px 0; margin-top: 15px;"><strong>✓ Productos detectados:</strong> {num_productos}</p>')
+            html_parts.append('<ul style="margin: 5px 0; padding-left: 20px; font-size: 0.9em; color: #555;">')
+            for linea in productos_compra[:20]:  # Limitar a 20 para no saturar
+                nombre = linea.producto.nombre
+                cantidad = linea.cantidad
+                precio_u = linea.precio_unitario
+                importe = cantidad * precio_u if cantidad and precio_u else 0
+                html_parts.append(
+                    f'<li>{nombre} | <strong>Cant:</strong> {cantidad} | '
+                    f'<strong>P/U:</strong> ${precio_u:,.2f} | <strong>Importe:</strong> ${importe:,.2f}</li>'
+                )
+            if num_productos > 20:
+                html_parts.append(f'<li><em>... y {num_productos - 20} más</em></li>')
+            html_parts.append('</ul>')
+        
+        # Mensaje guía
+        if num_lineas_flags > 0 or num_pnr > 0:
+            html_parts.append(
+                '<p style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">'
+                '<strong>Acción requerida:</strong> Resuelve los items marcados con ⚠️ antes de marcar como "Revisado OK". '
+                'Usa los formularios arriba para procesar los PNR sin salir de esta página.'
+                '</p>'
+            )
+        else:
+            html_parts.append(
+                '<p style="margin-top: 15px; padding: 10px; background-color: #d4edda; border-left: 4px solid #28a745; color: #155724;">'
+                '<strong>✓ Todo resuelto:</strong> Puedes marcar esta compra como "Revisado OK" usando el dropdown "Estado revisión" más abajo.'
+                '</p>'
+            )
+        
+        # Agregar JavaScript para manejar el submit de PNR sin forms anidados
+        html_parts.append(
+            "<script>"
+            "function asignarPNR(btn) {"
+                "const pnrId = btn.getAttribute('data-pnr-id');"
+                "const compraId = btn.getAttribute('data-compra-id');"
+                "const csrfToken = btn.getAttribute('data-csrf');"
+                "const productoId = document.getElementById('producto_id_' + pnrId).value;"
+                "if (!productoId) { alert('Selecciona un producto'); return; }"
+                "const crearAlias = document.getElementById('crear_alias_' + pnrId).checked;"
+                "const form = document.createElement('form');"
+                "form.method = 'POST';"
+                "form.action = '/admin/compras/compra/' + compraId + '/asignar_pnr/';"
+                "const fields = {"
+                    "'csrfmiddlewaretoken': csrfToken,"
+                    "'pnr_id': pnrId,"
+                    "'producto_id': productoId,"
+                    "'crear_alias': crearAlias ? 'on' : ''"
+                "};"
+                "for (const key in fields) {"
+                    "const input = document.createElement('input');"
+                    "input.type = 'hidden';"
+                    "input.name = key;"
+                    "input.value = fields[key];"
+                    "form.appendChild(input);"
+                "}"
+                "document.body.appendChild(form);"
+                "form.submit();"
+            "}"
+            "</script>"
+        )
+        
+        html_parts.append('</div>')
+        
+        # Usar mark_safe en lugar de format_html porque ya usamos f-strings
+        from django.utils.safestring import mark_safe
+        return mark_safe(''.join(html_parts))
+    
+    def marcar_revisado_ok(self, request, queryset):
+        """Acción para marcar compras como revisadas OK."""
+        updated = queryset.update(estado_revision="revisado_ok")
+        self.message_user(request, f"{updated} compra(s) marcada(s) como 'Revisado OK'.")
+    marcar_revisado_ok.short_description = "Marcar como Revisado OK"
+    
+    def marcar_revisado_con_cambios(self, request, queryset):
+        """Acción para marcar compras como revisadas con cambios."""
+        updated = queryset.update(estado_revision="revisado_con_cambios")
+        self.message_user(request, f"{updated} compra(s) marcada(s) como 'Revisado con cambios'.")
+    marcar_revisado_con_cambios.short_description = "Marcar como Revisado con cambios"
 
 # Registro de modelos en el admin
-admin.site.register(Compra)
+admin.site.register(Compra, CompraAdmin)
 admin.site.register(Proveedor, ProveedorAdmin)
 admin.site.register(CompraProducto, CompraProductoAdmin)  

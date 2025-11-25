@@ -1,3 +1,5 @@
+import dotenv
+dotenv.load_dotenv()
 import os
 import django
 import re
@@ -15,7 +17,7 @@ from ventas.utils.registrar_venta import registrar_venta_automatizada
 from extractors.utils_extractores import extraer_uuid, extraer_total
 
 # === Cambia el PDF a probar ===
-pdf_path = "LEPR970522CD0_Factura_940_F56F7899-8B7A-4886-93A8-3DF971289F63.pdf"
+pdf_path = "LEPR970522CD0_Factura_987_89035BD9-8F47-4695-B5F9-051860FEC0AC.pdf"
 
 def main():
     # 1) Extraer texto

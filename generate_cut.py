@@ -1,3 +1,5 @@
+import dotenv
+dotenv.load_dotenv()
 import os
 import django
 from datetime import datetime

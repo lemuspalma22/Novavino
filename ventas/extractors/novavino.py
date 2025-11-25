@@ -5,6 +5,8 @@ from compras.extractors.pdf_reader import extract_text_from_pdf
 from extractors.utils_extractores import extraer_total
 
 MONEY_RE = re.compile(r"\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2})|[0-9]+(?:\.[0-9]{2}))")
+SKU_LIKE_RE = re.compile(r"^[A-Z0-9\-]{2,12}$")
+UNIT_RE = re.compile(r"^[A-Z0-9]{1,}(?:\s*-\s*[A-Z0-9]{1,})?$")  # p.ej. "H87 - BOT", "PZA"
 
 def _to_decimal(s: str) -> Decimal | None:
     try:
@@ -28,20 +30,39 @@ def _find_section(lines, start_kw, end_kw_opts):
             break
     return i_start, i_end
 
+def _line_es_meta(s: str) -> bool:
+    s = (s or "").strip()
+    if not s:
+        return True
+    meta_prefixes = (
+        "Clave Prod. Serv.", "Impuestos:", "Traslados:", "Retenciones:",
+        "Objeto Imp.", "Objeto de impuesto", "Objeto de Impuesto",
+        "No. Identificación -", "No. Identificacion -", "Descripción", "Descripcion"
+    )
+    if any(s.startswith(p) for p in meta_prefixes):
+        return True
+    # Evita "02 - Sí objeto" y el renglón siguiente "de impuesto."
+    if re.match(r"^\d{2}\s*-\s+Sí objeto", s) or s.lower() == "de impuesto.":
+        return True
+    # Línea que solo trae dinero
+    if re.fullmatch(r"\$\s*[0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2})|\$\s*[0-9]+(?:\.[0-9]{2})", s):
+        return True
+    return False
+
 def _es_producto_valido(nombre: str) -> bool:
     nombre = (nombre or "").strip()
     if not nombre:
         return False
     if nombre in {"0.00", "0", "00"}:
         return False
-    # evita números montos sueltos
+    # evita números/montos sueltos
     if re.fullmatch(r"^[-+]?\d{1,3}(?:,\d{3})*(?:\.\d+)?$|^\d+(\.\d+)?$", nombre):
         return False
     # cabeceras / ruido típico
     prohibidos = [
         r"^IEPS", r"^IVA", r"^pz$", r"^CP:", r"^\d{5}$", r"Comprobante", r"Pago", r"Emisión",
         r"^Fecha", r"^NOMBRE:", r"^RFC", r"^Uso CFDI", r"^SUBTOTAL", r"^TOTAL", r"^Importe",
-        r"[A-Z]{5,}[0-9]{2,}"
+        r"[A-Z]{5,}[0-9]{2,}", r"^No\. Identificaci[oó]n", r"^\d{2}\s*-\s+"
     ]
     for p in prohibidos:
         if re.search(p, nombre, re.IGNORECASE):
@@ -84,21 +105,24 @@ def extraer_factura_novavino(texto: str) -> dict:
             break
 
     # Total robusto
-    data["total"] = Decimal(str(extraer_total(texto))) if extraer_total(texto) is not None else None
+    total_extraido = extraer_total(texto)
+    data["total"] = Decimal(str(total_extraido)) if total_extraido is not None else None
 
     # ===== Productos =====
     i0, i1 = _find_section(lines, "CONCEPTOS", ["IMPORTE CON LETRA", "TOTAL"])
     if i0 is None:
         return data
 
-    IVA_RE  = re.compile(r"002\s+IVA\s+Base\s*-\s*([0-9\.]+)\s+Tasa\s*-\s*(0\.\d+)\s+Importe\s*-\s*\$\s*([0-9,\.]+)")
-    IEPS_RE = re.compile(r"003\s+IEPS\s+Base\s*-\s*([0-9\.]+)\s+Tasa\s*-\s*(0\.\d+)\s+Importe\s*-\s*\$\s*([0-9,\.]+)")
-
     i = i0 + 1
     while i < i1:
         ln = lines[i].strip()
-        m_qty = re.match(r"^(\d+(?:\.\d{1,2})?)$", ln)
+        # Detecta inicio de concepto: cantidad sola en la línea (ej. "2.00")
+        m_qty = re.match(r"^(\d+(?:\.\d+)?)$", ln)
         if not m_qty:
+            i += 1
+            continue
+
+        if i + 1 >= i1 or not UNIT_RE.match(lines[i + 1].strip()):
             i += 1
             continue
 
@@ -107,23 +131,32 @@ def extraer_factura_novavino(texto: str) -> dict:
             i += 1
             continue
 
-        # Nombre producto
+        # === Nombre de producto, tolerando "No. Identificación" (SKU) ===
         nombre = None
-        if i + 2 < i1:
-            posible_nombre = lines[i + 2].strip()
-            nombre = posible_nombre
+        sku = None
+        pos = i + 2  # después de la unidad
+
+        if pos < i1 and SKU_LIKE_RE.fullmatch(lines[pos].strip()):
+            sku = lines[pos].strip()
+            pos += 1
+
+        while pos < i1 and _line_es_meta(lines[pos]):
+            pos += 1
+
+        if pos < i1:
+            nombre = lines[pos].strip()
 
         if not nombre or not _es_producto_valido(nombre):
             i += 1
             continue
 
-        # Buscar precio unitario base
+        # Buscar precio base / importe
         precio_unitario = None
         importe = None
         j = i
         limit = min(i + 16, i1)
 
-        # 1) Precio Unitario explícito
+        # Precio unitario explícito
         for k in range(j, limit):
             lnk = lines[k]
             if "Precio Unitario" in lnk:
@@ -134,7 +167,7 @@ def extraer_factura_novavino(texto: str) -> dict:
                         precio_unitario = cand
                         break
 
-        # 2) Si no lo encontró: línea con solo $
+        # Fallback: $ X.XX en línea suelta
         if precio_unitario is None:
             for k in range(j, limit):
                 lnk = lines[k].strip()
@@ -145,47 +178,48 @@ def extraer_factura_novavino(texto: str) -> dict:
                     precio_unitario = _to_decimal(m_only.group(1))
                     break
 
-        # 3) Captura importe total de partida
-        for k in range(j, limit):
-            lnk = lines[k]
-            if "Importe -" in lnk:
-                m_imp = MONEY_RE.search(lnk)
-                if m_imp:
-                    importe = _to_decimal(m_imp.group(1))
+        # ==== Calcular impuestos por unidad (ahora soporta saltos de línea) ====
+        def _read_wrapped_amount(idx_start: int, idx_end: int, needle: str) -> Decimal:
+            k = idx_start
+            while k < idx_end:
+                l = lines[k]
+                if needle in l and "Importe" in l:
+                    # intentar mismo renglón
+                    m = MONEY_RE.search(l)
+                    if m:
+                        dec = _to_decimal(m.group(1))
+                        if dec is not None:
+                            return dec
+                    # intentar renglones siguientes cercanos
+                    look = k + 1
+                    while look < min(k + 4, idx_end):
+                        l2 = lines[look].strip()
+                        if not l2:
+                            look += 1
+                            continue
+                        m2 = MONEY_RE.search(l2)
+                        if m2:
+                            dec = _to_decimal(m2.group(1))
+                            if dec is not None:
+                                return dec
+                        m3 = re.match(r"^([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2})|[0-9]+(?:\.[0-9]{2}))$", l2)
+                        if m3:
+                            dec = _to_decimal(m3.group(1))
+                            if dec is not None:
+                                return dec
+                        look += 1
+                k += 1
+            return Decimal("0.00")
 
-        # 4) Fallback importe/cantidad
-        if precio_unitario is None and importe:
-            try:
-                precio_unitario = (importe / cantidad).quantize(Decimal("0.01"))
-            except (InvalidOperation, ZeroDivisionError):
-                precio_unitario = None
+        iva_total_line  = _read_wrapped_amount(j, limit, "002 IVA")
+        ieps_total_line = _read_wrapped_amount(j, limit, "003 IEPS")
 
-        # ==== Calcular impuestos ====
-        iva_total_line = Decimal("0.00")
-        ieps_total_line = Decimal("0.00")
-        iva_base = iva_tasa = ieps_base = ieps_tasa = None
+        iva_per_unit  = (iva_total_line / cantidad)  if iva_total_line and cantidad > 0 else Decimal("0.00")
+        ieps_per_unit = (ieps_total_line / cantidad) if ieps_total_line and cantidad > 0 else Decimal("0.00")
 
-        for k in range(j, limit):
-            lnk = lines[k]
-            m_iva = IVA_RE.search(lnk)
-            if m_iva:
-                iva_base = _to_decimal(m_iva.group(1))
-                iva_tasa = _to_decimal(m_iva.group(2))
-                iva_total_line = _to_decimal(m_iva.group(3)) or Decimal("0.00")
-            m_ieps = IEPS_RE.search(lnk)
-            if m_ieps:
-                ieps_base = _to_decimal(m_ieps.group(1))
-                ieps_tasa = _to_decimal(m_ieps.group(2))
-                ieps_total_line = _to_decimal(m_ieps.group(3)) or Decimal("0.00")
-
-        iva_per_unit = iva_total_line / cantidad if iva_total_line and cantidad > 0 else Decimal("0.00")
-        ieps_per_unit = ieps_total_line / cantidad if ieps_total_line and cantidad > 0 else Decimal("0.00")
-
+        # Calcular precio final con impuestos
         if precio_unitario:
             precio_unitario_con_impuestos = (precio_unitario + iva_per_unit + ieps_per_unit).quantize(Decimal("0.01"))
-        elif importe and cantidad > 0:
-            base_unit = (importe / cantidad).quantize(Decimal("0.01"))
-            precio_unitario_con_impuestos = (base_unit + iva_per_unit + ieps_per_unit).quantize(Decimal("0.01"))
         else:
             precio_unitario_con_impuestos = None
 
@@ -196,7 +230,8 @@ def extraer_factura_novavino(texto: str) -> dict:
         print(f"  IVA por unidad: {iva_per_unit}")
         print(f"  IEPS por unidad: {ieps_per_unit}")
         print(f"  Precio final con impuestos: {precio_unitario_con_impuestos}")
-        print(f"  Importe total producto: {precio_unitario_con_impuestos * cantidad}")
+        if precio_unitario_con_impuestos is not None and cantidad is not None:
+            print(f"  Importe total producto: {precio_unitario_con_impuestos * cantidad}")
         print("--------------------------------------------------")
 
         if precio_unitario_con_impuestos and _es_producto_valido(nombre):
@@ -206,7 +241,15 @@ def extraer_factura_novavino(texto: str) -> dict:
                 "precio_unitario": precio_unitario_con_impuestos
             })
 
-        i = j if j > i else i + 1
+        # Avanza al siguiente posible concepto
+        next_i = pos
+        while next_i < i1:
+            cand = lines[next_i].strip()
+            if re.match(r"^(\d+(?:\.\d+)?)$", cand):
+                if next_i + 1 < i1 and UNIT_RE.match(lines[next_i + 1].strip()):
+                    break
+            next_i += 1
+        i = next_i
 
     # === Ajuste al centavo ===
     if data["productos"] and data["total"]:
@@ -218,8 +261,6 @@ def extraer_factura_novavino(texto: str) -> dict:
             data["productos"][-1]["precio_unitario"] = nuevo_precio_unitario
 
     return data
-
-
 
 def extract_venta_data(pdf_path: str) -> dict:
     """Wrapper por si en algún punto llamas por ruta en lugar de texto."""

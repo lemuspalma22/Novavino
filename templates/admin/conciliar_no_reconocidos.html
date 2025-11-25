@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <fieldset class="module aligned">
+      {{ form.as_p }}
+    </fieldset>
+
+    {% if objetos %}
+      <h3>Seleccionados</h3>
+      <ul>
+        {% for obj in objetos %}
+          <li>
+            <strong>{{ obj.nombre_detectado }}</strong>
+            — UUID: {{ obj.uuid_factura|default:"-" }}
+            — Cant: {{ obj.cantidad|default:"-" }}
+            — P.U.: {{ obj.precio_unitario|default:"-" }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="submit-row">
+      <input type="submit" value="{% trans 'Confirmar' %}" class="default"/>
+      <a href=".." class="button cancel-link">{% trans 'Cancelar' %}</a>
+    </div>
+  </form>
+{% endblock %}

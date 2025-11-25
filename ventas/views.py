@@ -11,6 +11,7 @@ from reportlab.pdfgen import canvas
 
 from inventario.models import Producto
 from .models import Factura
+from utils.reportes import calcular_agregados_periodo_ventas, generar_dict_reporte_factura
 
 
 # ----------------------------- utilidades -----------------------------
@@ -71,43 +72,31 @@ def api_producto_precios(request, pk: int):
 def corte_contable(request):
     """Corte por fecha de FACTURACIÓN."""
     fi, ff = _rangos(request)
-    qs = Factura.objects.all()
-    if fi and ff:
-        qs = qs.filter(fecha_facturacion__range=(fi, ff))
-    qs = qs.prefetch_related("detalles__producto")
-
-    # Armar reporte (estructura compatible con tu template actual)
+    
+    # Usar la nueva función abstraída
+    agregados = calcular_agregados_periodo_ventas(
+        Factura.objects.filter(fecha_facturacion__isnull=False),  # Query defensivo
+        fi, ff,
+        campo_fecha='fecha_facturacion',
+        solo_pagadas=False
+    )
+    
+    qs = agregados['queryset']
+    
+    # Armar reporte usando función abstraída
     reporte = []
     for f in qs:
-        costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
-        ganancia = (f.total or 0) - costo
-        pers, no_pers = {}, {}
-        for d in f.detalles.all():
-            key = d.producto.nombre
-            bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
-            bucket[key] = bucket.get(key, 0) + (d.cantidad or 0)
+        reporte.append(generar_dict_reporte_factura(f))
 
-        reporte.append({
-            "folio": f.folio_factura,
-            "cliente": str(f.cliente),
-            "fecha": f.fecha_facturacion.strftime("%d-%b-%Y"),
-            "total_venta": f.total or 0,
-            "costo_proveedores": costo,
-            "ganancia": ganancia,
-            "productos_personalizados": pers or "Ninguno",
-            "productos_no_personalizados": no_pers or "Ninguno",
-        })
-
-    tot_vta, tot_costo, tot_gan = _totales(qs)
     return render(request, "ventas/corte.html", {
         "modo": "contable",
         "facturas": qs,
         "reporte": reporte,
         "fi": fi, "ff": ff,
         "totales": {
-            "total_venta": tot_vta,
-            "total_costo_proveedores": tot_costo,
-            "total_ganancia": tot_gan,
+            "total_venta": agregados['total_venta'],
+            "total_costo_proveedores": agregados['costo_total'],
+            "total_ganancia": agregados['ganancia_total'],
         },
     })
 
@@ -116,42 +105,35 @@ def corte_contable(request):
 def corte_flujo(request):
     """Corte por fecha de PAGO (solo pagadas)."""
     fi, ff = _rangos(request)
-    qs = Factura.objects.filter(pagado=True)
-    if fi and ff:
-        qs = qs.filter(fecha_pago__range=(fi, ff))
-    qs = qs.prefetch_related("detalles__producto")
-
+    
+    # Usar la nueva función abstraída
+    agregados = calcular_agregados_periodo_ventas(
+        Factura.objects.filter(fecha_pago__isnull=False),  # Query defensivo
+        fi, ff,
+        campo_fecha='fecha_pago',
+        solo_pagadas=True
+    )
+    
+    qs = agregados['queryset']
+    
+    # Armar reporte usando función abstraída
     reporte = []
     for f in qs:
-        costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
-        ganancia = (f.total or 0) - costo
-        pers, no_pers = {}, {}
-        for d in f.detalles.all():
-            key = d.producto.nombre
-            bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
-            bucket[key] = bucket.get(key, 0) + (d.cantidad or 0)
+        reporte_dict = generar_dict_reporte_factura(f)
+        # Ajustar fecha para modo flujo (fecha_pago en lugar de fecha_facturacion)
+        if f.fecha_pago:
+            reporte_dict["fecha"] = f.fecha_pago.strftime("%d-%b-%Y")
+        reporte.append(reporte_dict)
 
-        reporte.append({
-            "folio": f.folio_factura,
-            "cliente": str(f.cliente),
-            "fecha": f.fecha_pago.strftime("%d-%b-%Y") if f.fecha_pago else "",
-            "total_venta": f.total or 0,
-            "costo_proveedores": costo,
-            "ganancia": ganancia,
-            "productos_personalizados": pers or "Ninguno",
-            "productos_no_personalizados": no_pers or "Ninguno",
-        })
-
-    tot_vta, tot_costo, tot_gan = _totales(qs)
     return render(request, "ventas/corte.html", {
         "modo": "flujo",
         "facturas": qs,
         "reporte": reporte,
         "fi": fi, "ff": ff,
         "totales": {
-            "total_venta": tot_vta,
-            "total_costo_proveedores": tot_costo,
-            "total_ganancia": tot_gan,
+            "total_venta": agregados['total_venta'],
+            "total_costo_proveedores": agregados['costo_total'],
+            "total_ganancia": agregados['ganancia_total'],
         },
     })
 

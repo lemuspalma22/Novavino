@@ -1,3 +1,5 @@
+import dotenv
+dotenv.load_dotenv()
 import os
 import django
 import re
@@ -15,7 +17,7 @@ from extractors.utils_extractores import (
 )
 
 # Cambia el nombre si pruebas otro archivo
-pdf_path = "SVI180726AHAFS1945.pdf"
+pdf_path = "VBM041202DD1FB24554.pdf"
 
 text = extract_text_from_pdf(pdf_path)
 

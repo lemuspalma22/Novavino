@@ -1,3 +1,5 @@
+import dotenv
+dotenv.load_dotenv()
 from compras.extractors.pdf_reader import extract_text_from_pdf
 from extractors.secretos_delavid import ExtractorSecretosDeLaVid
 from extractors.vieja_bodega import ExtractorViejaBodega
