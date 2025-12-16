@@ -40,6 +40,7 @@ def registrar_venta_automatizada(datos: dict, replace_if_exists: bool = False) -
         raise ValueError("Falta 'folio' en datos de la venta.")
 
     cliente = (datos.get("cliente") or "").strip()
+    metodo_pago = datos.get("metodo_pago")  # PUE o PPD
     fecha_fact = fecha_dt.date() if fecha_dt else now().date()
     items = datos.get("productos") or datos.get("items") or []
     if not items:
@@ -48,6 +49,7 @@ def registrar_venta_automatizada(datos: dict, replace_if_exists: bool = False) -
             cliente=cliente,
             fecha_facturacion=fecha_fact,
             total=total_decimal,
+            metodo_pago=metodo_pago,
         )
 
     with transaction.atomic():
@@ -59,14 +61,16 @@ def registrar_venta_automatizada(datos: dict, replace_if_exists: bool = False) -
             DetalleFactura.objects.filter(factura=factura).delete()  # signals restauran stock
             factura.cliente = cliente or factura.cliente
             factura.fecha_facturacion = fecha_fact or factura.fecha_facturacion
+            factura.metodo_pago = metodo_pago or factura.metodo_pago
             factura.total = Decimal("0.00")  # se recalcula por signals
-            factura.save(update_fields=["cliente", "fecha_facturacion", "total"])
+            factura.save(update_fields=["cliente", "fecha_facturacion", "metodo_pago", "total"])
         except Factura.DoesNotExist:
             factura = Factura.objects.create(
                 folio_factura=folio,
                 cliente=cliente,
                 fecha_facturacion=fecha_fact,
                 total=Decimal("0.00"),
+                metodo_pago=metodo_pago,
             )
 
         detalles_creados = 0

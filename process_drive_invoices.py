@@ -233,14 +233,13 @@ def resolve_or_create_proveedor_instance(data: dict) -> Proveedor:
 # Extractores por proveedor
 # ============================
 def try_vendor_extractors(pdf_path: str):
-    # Vieja Bodega
-    if extract_vieja_bodega is not None:
-        try:
-            data_vbm = extract_vieja_bodega(pdf_path)
-            if data_vbm and (data_vbm.get("folio") or data_vbm.get("uuid") or data_vbm.get("productos")):
-                return data_vbm
-        except Exception:
-            pass
+    """
+    DEPRECADO: Esta función intentaba extraer por proveedor específico,
+    pero ahora usamos factura_parser.py que ya maneja todos los proveedores.
+    Se mantiene por compatibilidad pero siempre retorna None.
+    """
+    # Ya no intentamos extractores individuales aquí
+    # El factura_parser.py maneja todos los proveedores correctamente
     return None
 
 # ============================

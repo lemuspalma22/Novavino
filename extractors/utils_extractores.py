@@ -6,18 +6,18 @@ def extraer_folio(texto):
     lines = texto.splitlines()
     for i, line in enumerate(lines):
         if re.search(r"Folio\s*:", line, re.IGNORECASE):
-            print(f"\n🔎 Línea con 'Folio:': {repr(line)}")
+            # print(f"\n[DEBUG] Linea con 'Folio:': {repr(line)}")
             for offset in range(1, 4):
                 if i - offset >= 0:
                     anterior = lines[i - offset].strip()
-                    print(f"👁 Línea anterior ({offset}): {repr(anterior)}")
+                    # print(f"[DEBUG] Linea anterior ({offset}): {repr(anterior)}")
                     cleaned = re.sub(r"[^\d]", "", anterior)
-                    print(f"🧼 Limpiado: {repr(cleaned)}")
+                    # print(f"[DEBUG] Limpiado: {repr(cleaned)}")
                     if cleaned.isdigit():
-                        print(f"✅ Detectado como folio: {cleaned}")
+                        # print(f"[OK] Detectado como folio: {cleaned}")
                         return cleaned
-            raise ValueError("❌ Se encontró 'Folio:' pero no había número válido en las líneas anteriores.")
-    raise ValueError("❌ No se encontró 'Folio:' en el texto OCR.")
+            raise ValueError("Se encontro 'Folio:' pero no habia numero valido en las lineas anteriores.")
+    raise ValueError("No se encontro 'Folio:' en el texto OCR.")
 
 
 
@@ -27,7 +27,7 @@ def extraer_uuid(texto):
     """
     match = re.search(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b", texto)
     if not match:
-        raise ValueError("❌ No se encontró un UUID válido en el texto OCR.")
+        raise ValueError("No se encontro un UUID valido en el texto OCR.")
     return match.group(0)
 
 
@@ -37,7 +37,7 @@ def extraer_fecha_emision(texto):
     """
     match = re.search(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})", texto)
     if not match:
-        raise ValueError("❌ No se encontró la fecha de emisión en el texto OCR.")
+        raise ValueError("No se encontro la fecha de emision en el texto OCR.")
     return datetime.fromisoformat(match.group(1))
 
 
@@ -109,7 +109,7 @@ def extraer_total(texto: str) -> float:
         values = [float(x.replace(",", "")) for x in all_matches]
         return max(values)
 
-    raise ValueError("❌ No se encontró el total en el texto OCR.")
+    raise ValueError("No se encontro el total en el texto OCR.")
 
 
 

@@ -70,10 +70,18 @@ def asignar_pnr_view(request, object_id):
                 producto.save(update_fields=["stock"])
                 print(f"→ CompraProducto actualizado: cantidad {cantidad_anterior} + {cantidad_pnr} = {compra_producto.cantidad}")
                 print(f"→ Stock actualizado: {stock_anterior} + {cantidad_pnr} = {producto.stock}")
-            
-            pnr.procesado = True
-            pnr.producto = producto
-            pnr.save(update_fields=["procesado", "producto"])
+        
+        print("✓ Transacción atómica completada exitosamente\n")
+        
+        # Marcar PNR como procesado FUERA de la transacción para evitar rollback
+        pnr.procesado = True
+        pnr.producto = producto
+        pnr.save(update_fields=["procesado", "producto"])
+        print(f"✓ PNR {pnr_id} marcado como procesado (fuera de transacción)")
+        
+        # Verificar que el PNR realmente se marcó como procesado
+        pnr.refresh_from_db()
+        print(f"DEBUG: Verificando PNR después de save - procesado={pnr.procesado}, producto_id={pnr.producto_id}")
         
         # Crear alias FUERA de la transacción para que no revierta todo si falla
         if crear_alias and pnr.nombre_detectado:
@@ -120,13 +128,17 @@ def crear_producto_pnr_view(request, object_id):
     pnr = get_object_or_404(ProductoNoReconocido, pk=pnr_id)
     
     try:
+        producto = None
         with transaction.atomic():
+            # Usar costo de transporte del proveedor si no se especificó uno
+            costo_transporte_final = Decimal(costo_transporte) if costo_transporte and costo_transporte != "0" else compra.proveedor.costo_transporte_unitario
+            
             producto = Producto.objects.create(
                 nombre=nombre,
                 tipo=tipo,
                 proveedor=compra.proveedor,
                 precio_compra=Decimal(precio_compra),
-                costo_transporte=Decimal(costo_transporte),
+                costo_transporte=costo_transporte_final,
                 precio_venta=Decimal(precio_venta),
                 stock=int(pnr.cantidad or 0),
             )
@@ -135,16 +147,18 @@ def crear_producto_pnr_view(request, object_id):
                 compra=compra,
                 producto=producto,
                 cantidad=int(pnr.cantidad or 0),
-                precio_unitario=Decimal(str(pnr.precio_unitario or 0)),
+                precio_unitario=Decimal(precio_compra),  # Usar el precio del formulario, no del PNR
                 detectado_como=pnr.nombre_detectado,
             )
-            
-            pnr.procesado = True
-            pnr.producto = producto
-            pnr.save(update_fields=["procesado", "producto"])
         
-        # Crear alias FUERA de la transacción para que no revierta todo si falla
-        if pnr.nombre_detectado:
+        # Marcar PNR y crear alias FUERA de la transacción
+        # Primero marcamos el PNR como procesado
+        pnr.procesado = True
+        pnr.producto = producto
+        pnr.save(update_fields=["procesado", "producto"])
+        
+        # Luego intentamos crear el alias
+        if pnr.nombre_detectado and producto:
             try:
                 AliasProducto.objects.get_or_create(
                     alias=pnr.nombre_detectado,
@@ -155,7 +169,8 @@ def crear_producto_pnr_view(request, object_id):
                 logger.error(f"Error creando alias para nuevo producto: {str(e)}", exc_info=True)
                 messages.warning(request, f"✓ Producto '{producto.nombre}' creado pero NO se pudo crear alias: {str(e)}")
         else:
-            messages.success(request, f"✓ Producto '{producto.nombre}' creado y asignado.")
+            if producto:
+                messages.success(request, f"✓ Producto '{producto.nombre}' creado y asignado.")
     except Exception as e:
         logger.error(f"Error creando producto desde PNR {pnr_id}: {str(e)}", exc_info=True)
         messages.error(request, f"Error al crear producto: {str(e)}")

@@ -10,6 +10,11 @@ from inventario.models import Producto
 
 
 class Factura(models.Model):
+    METODO_PAGO_CHOICES = [
+        ('PUE', 'PUE - Pago en una sola exhibición'),
+        ('PPD', 'PPD - Pago en parcialidades o diferido'),
+    ]
+    
     folio_factura = models.CharField(max_length=20, unique=True)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     cliente = models.CharField(max_length=100)
@@ -17,6 +22,7 @@ class Factura(models.Model):
     vencimiento = models.DateField(null=True, blank=True)
     pagado = models.BooleanField(default=False)
     fecha_pago = models.DateField(null=True, blank=True)
+    metodo_pago = models.CharField(max_length=3, choices=METODO_PAGO_CHOICES, null=True, blank=True, help_text="Método de pago según el CFDI")
     notas = models.TextField(null=True, blank=True)
 
     # --- Validación de consistencia pagado/fecha_pago ---
@@ -82,9 +88,12 @@ class DetalleFactura(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def save(self, *args, **kwargs):
-        # Si no viene costo, úsalo desde el producto
+        # Si no viene costo, calcúlalo desde el producto (precio_compra + costo_transporte)
         if self.producto and (self.precio_compra is None or Decimal(self.precio_compra) == 0):
-            self.precio_compra = self.producto.precio_compra or Decimal("0.00")
+            precio_base = self.producto.precio_compra or Decimal("0.00")
+            transporte = self.producto.costo_transporte or Decimal("0.00")
+            # Costo total = precio de compra + transporte
+            self.precio_compra = precio_base + transporte
 
         cant = Decimal(self.cantidad or 0)
         pvu = Decimal(self.precio_unitario or 0)

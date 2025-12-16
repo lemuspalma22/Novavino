@@ -1,0 +1,172 @@
+================================================================================
+LOG DE ACTUALIZACION DE PRODUCTOS
+================================================================================
+
+Leone Di Castris Primitivo di Manduria (ID: 384)
+  Proveedor: Secretos de la vid
+  Precio anterior: $244.00
+  Precio nuevo: $494.00
+  Diferencia: $250.00
+  Costo transporte: $15.00
+  Costo total (precio + transporte): $509.00
+
+Altotinto Sauvignon Blanc (ID: 355)
+  Proveedor: Vieja Bodega
+  Precio anterior: $277.00
+  Precio nuevo: $249.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $277.00
+
+Altotinto sauvignon blanc personalizado Molusk (ID: 356)
+  Proveedor: Vieja Bodega
+  Precio anterior: $277.00
+  Precio nuevo: $249.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $277.00
+
+Anecdota Rose Cabernet Merlot (ID: 407)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+Anécdota Chardonnay Chenin (ID: 367)
+  Proveedor: Vieja Bodega
+  Precio anterior: $214.00
+  Precio nuevo: $186.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $214.00
+
+Anécdota Chenin Blanc (ID: 366)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+Carlos Montes Criado en Roble 12M Tannat (ID: 442)
+  Proveedor: Vieja Bodega
+  Precio anterior: $445.00
+  Precio nuevo: $327.00
+  Diferencia: $-118.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $355.00
+
+Chiappela Tannat (ID: 379)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+Criado en Roble Tannat (ID: 375)
+  Proveedor: Vieja Bodega
+  Precio anterior: $445.00
+  Precio nuevo: $327.00
+  Diferencia: $-118.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $355.00
+
+Elegido Tannat Cabernet Merlot (ID: 406)
+  Proveedor: Vieja Bodega
+  Precio anterior: $222.00
+  Precio nuevo: $216.00
+  Diferencia: $-6.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $244.00
+
+Elite Malbec (ID: 411)
+  Proveedor: Vieja Bodega
+  Precio anterior: $993.00
+  Precio nuevo: $965.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $993.00
+
+Elite Nebbiolo (ID: 413)
+  Proveedor: Vieja Bodega
+  Precio anterior: $993.00
+  Precio nuevo: $965.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $993.00
+
+Pau Moscato (ID: 418)
+  Proveedor: Vieja Bodega
+  Precio anterior: $394.00
+  Precio nuevo: $366.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $394.00
+
+Reserva Familiar tannat (ID: 372)
+  Proveedor: Vieja Bodega
+  Precio anterior: $229.00
+  Precio nuevo: $201.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $229.00
+
+V.T. PIZZA PARADISO P. P. 750ML (ID: 447)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+V.T. VALLE OCULTO CABERNET 6M 750ML (ID: 463)
+  Proveedor: Vieja Bodega
+  Precio anterior: $185.99
+  Precio nuevo: $186.00
+  Diferencia: $0.01
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $214.00
+
+VT Altotinto selección (ID: 363)
+  Proveedor: Vieja Bodega
+  Precio anterior: $304.00
+  Precio nuevo: $276.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $304.00
+
+VT CABERNET MERLOT PERSONALIZADO CIGNO (ID: 361)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+VT CABERNET SAUVIGNON PERSONALIZADO SICOMORO (ID: 428)
+  Proveedor: Vieja Bodega
+  Precio anterior: $169.00
+  Precio nuevo: $141.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $169.00
+
+VT ENSAMBLE PERSONALIZADO SICOMORO (ID: 427)
+  Proveedor: Vieja Bodega
+  Precio anterior: $214.00
+  Precio nuevo: $186.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $214.00
+
+Vidente Chardonnay (ID: 359)
+  Proveedor: Vieja Bodega
+  Precio anterior: $277.00
+  Precio nuevo: $249.00
+  Diferencia: $-28.00
+  Costo transporte: $28.00
+  Costo total (precio + transporte): $277.00
+

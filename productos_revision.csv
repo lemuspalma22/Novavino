@@ -1,0 +1,95 @@
+﻿id,nombre,precio_actual,costo_transporte,precio_sugerido,costo_transporte_calculado,proveedor,requiere_correccion
+478,ALBA VEGA ALBARIÑO BLANCO,361.0,15.0,346.0,15.0,Secretos de la Vid S de RL de CV,FALSE
+481,FIRRIATO SANTAGOSTINO BAGLIO SORIA Nero,521.0,15.0,506.0,15.0,Secretos de la Vid S de RL de CV,FALSE
+472,LEONE DE CASTRIS ILLIVIA Negroamaro 100%,209.0,15.0,194.0,15.0,Secretos de la Vid S de RL de CV,FALSE
+471,LEONE DE CASTRIS VILLA SANTERA Primitivo,494.0,15.0,479.0,15.0,Secretos de la Vid S de RL de CV,FALSE
+473,PLENO BLANCO NAVARRA,125.4,15.0,110.4,15.0,Secretos de la Vid S de RL de CV,FALSE
+474,PLENO CRIANZA NAVARRA,186.2,15.0,171.2,15.0,Secretos de la Vid S de RL de CV,FALSE
+476,PLENO GRAN RESERVA,410.4,15.0,395.4,15.0,Secretos de la Vid S de RL de CV,FALSE
+477,PLENO RESERVA NAVARRA,243.2,15.0,228.2,15.0,Secretos de la Vid S de RL de CV,FALSE
+479,PLENO ROSADO NAVARRA,125.4,15.0,110.4,15.0,Secretos de la Vid S de RL de CV,FALSE
+475,PLENO TEMPRANILLO TINTO,125.4,15.0,110.4,15.0,Secretos de la Vid S de RL de CV,FALSE
+469,POLI ELISIR LIMONE / LIMONCELLO,494.0,15.0,479.0,15.0,Secretos de la Vid S de RL de CV,FALSE
+480,"TRES RIBERAS ""HA PASADO UN ÁNGEL""",117.8,15.0,102.8,15.0,Secretos de la Vid S de RL de CV,FALSE
+387,5 Vite,247.0,15.0,232.0,15.0,Secretos de la vid,FALSE
+424,Almas Triunfantes Mezcal Ensamble,600.0,15.0,585.0,15.0,Secretos de la vid,FALSE
+436,Almas Triunfantes Mezcal Espadin,1064.0,15.0,1049.0,15.0,Secretos de la vid,FALSE
+421,Altavilla de la Corte,312.0,15.0,297.0,15.0,Secretos de la vid,FALSE
+425,Bacanora Yoeme,730.0,15.0,715.0,15.0,Secretos de la vid,FALSE
+390,Caeles Syrah,327.0,15.0,312.0,15.0,Secretos de la vid,FALSE
+385,Chiaramonte Nero D'avola,320.0,15.0,305.0,15.0,Secretos de la vid,FALSE
+423,Coyote Vibora Sotol,532.0,15.0,517.0,15.0,Secretos de la vid,FALSE
+433,Flumen Prosecco,225.0,15.0,210.0,15.0,Secretos de la vid,FALSE
+365,Gaudensius Blanc de Noir,669.0,15.0,654.0,15.0,Secretos de la vid,FALSE
+416,Gin Marconi 46,950.0,15.0,935.0,15.0,Secretos de la vid,FALSE
+370,Hida,209.0,15.0,194.0,15.0,Secretos de la vid,FALSE
+386,Hida tinto,209.0,15.0,194.0,15.0,Secretos de la vid,FALSE
+422,Il Lemos,358.0,15.0,343.0,15.0,Secretos de la vid,FALSE
+431,Ilivia Leone de Castris primitivo,244.0,15.0,229.0,15.0,Secretos de la vid,FALSE
+397,Imago Chardonnay,304.0,15.0,289.0,15.0,Secretos de la vid,FALSE
+384,Leone Di Castris Primitivo di Manduria,244.0,15.0,229.0,15.0,Secretos de la vid,FALSE
+399,Montepulciano 1.5L,206.0,15.0,191.0,15.0,Secretos de la vid,FALSE
+388,Ottobuche,209.0,15.0,194.0,15.0,Secretos de la vid,FALSE
+380,Piarelle Passito,418.0,15.0,403.0,15.0,Secretos de la vid,FALSE
+415,Poli Sarpa Blanca,795.0,15.0,780.0,15.0,Secretos de la vid,FALSE
+368,Rocca Lupo Nero,99.0,15.0,84.0,15.0,Secretos de la vid,FALSE
+429,Rocca Merlot,122.0,15.0,107.0,15.0,Secretos de la vid,FALSE
+378,Rocca Montepulciano D'abruzzo,168.0,15.0,153.0,15.0,Secretos de la vid,FALSE
+389,Rocca Perciatta Nero D'avola Syrah,175.0,15.0,160.0,15.0,Secretos de la vid,FALSE
+391,Rocca Perciatta inzolia Chardonnay,175.0,15.0,160.0,15.0,Secretos de la vid,FALSE
+383,Rocca Sangiose,149.0,15.0,134.0,15.0,Secretos de la vid,FALSE
+377,Rocca Zinfandel Blush,156.0,15.0,141.0,15.0,Secretos de la vid,FALSE
+430,Rocca pinot grigio Rosé,175.0,15.0,160.0,15.0,Secretos de la vid,FALSE
+393,Scaia Corvina,285.0,15.0,270.0,15.0,Secretos de la vid,FALSE
+381,Scaia Garganega Chardonnay,285.0,15.0,270.0,15.0,Secretos de la vid,FALSE
+426,Sotol Jon Oro Coyamel,347.0,15.0,332.0,15.0,Secretos de la vid,FALSE
+432,VB Rocca pinot grigio,175.0,15.0,160.0,15.0,Secretos de la vid,FALSE
+369,VE Dueto spumante Pinot bianco Chardonay,160.0,15.0,145.0,15.0,Secretos de la vid,FALSE
+382,VR Five Roses,365.0,15.0,350.0,15.0,Secretos de la vid,FALSE
+412,VT Valpolicela ripssso Monti Garbi,437.0,15.0,422.0,15.0,Secretos de la vid,FALSE
+398,Vigna Case Alte Sauvignon Blanc,323.0,15.0,308.0,15.0,Secretos de la vid,FALSE
+362,ANÉCDOTA BLEND,186.0,28.0,158.0,28.0,Vieja Bodega,FALSE
+357,Altotinto Chardonay personalizado Crabster,277.0,28.0,249.0,28.0,Vieja Bodega,FALSE
+456,Altotinto Chardonay personalizado Crabster,249.0,28.0,221.0,28.0,Vieja Bodega,FALSE
+457,Altotinto Chardonay personalizado Crabster,249.0,28.0,221.0,28.0,Vieja Bodega,FALSE
+396,Altotinto Chardonnay,249.0,28.0,221.0,28.0,Vieja Bodega,FALSE
+355,Altotinto Sauvignon Blanc,277.0,28.0,249.0,28.0,Vieja Bodega,FALSE
+356,Altotinto sauvignon blanc personalizado Molusk,277.0,28.0,249.0,28.0,Vieja Bodega,FALSE
+407,Anecdota Rose Cabernet Merlot,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+408,Anécdota Cabernet Merlot,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+367,Anécdota Chardonnay Chenin,214.0,28.0,186.0,28.0,Vieja Bodega,FALSE
+366,Anécdota Chenin Blanc,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+420,Anécdota Moscatel Alejandría,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+442,Carlos Montes Criado en Roble 12M Tannat,445.0,28.0,417.0,28.0,Vieja Bodega,FALSE
+371,Carlos Montes Merlot,327.0,28.0,299.0,28.0,Vieja Bodega,FALSE
+373,Carlos Montes Tannat,327.0,28.0,299.0,28.0,Vieja Bodega,FALSE
+374,Carlos Montes Tannat Cabernet,327.0,28.0,299.0,28.0,Vieja Bodega,FALSE
+379,Chiappela Tannat,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+375,Criado en Roble Tannat,445.0,28.0,417.0,28.0,Vieja Bodega,FALSE
+406,Elegido Tannat Cabernet Merlot,222.0,28.0,194.0,28.0,Vieja Bodega,FALSE
+411,Elite Malbec,993.0,28.0,965.0,28.0,Vieja Bodega,FALSE
+413,Elite Nebbiolo,993.0,28.0,965.0,28.0,Vieja Bodega,FALSE
+418,Pau Moscato,394.0,28.0,366.0,28.0,Vieja Bodega,FALSE
+372,Reserva Familiar tannat,229.0,28.0,201.0,28.0,Vieja Bodega,FALSE
+459,V.B. ELITE VIII ALBARIÑO 750 ML,366.0,28.0,338.0,28.0,Vieja Bodega,FALSE
+446,V.B. MIYABI ANEC CHENIN BLANC 750 ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+453,V.T. ALTOTINTO GRAN CABERNET 750 ML,441.0,28.0,413.0,28.0,Vieja Bodega,FALSE
+460,V.T. ALTOTINTO NEBBIOLO 750 ML.,344.0,28.0,316.0,28.0,Vieja Bodega,FALSE
+451,V.T. BIB TINTO 4 MESES 3 LT,225.0,28.0,197.0,28.0,Vieja Bodega,FALSE
+458,V.T. CHIAPPELLA TANNAT 750 ml.,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+450,V.T. HOTEL CIGNO P.P. 750 ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+464,V.T. PICAHAÑA PRIMERO PASOS 750ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+447,V.T. PIZZA PARADISO P. P. 750ML,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+448,V.T. PIZZA PARADISO P. P. 750ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+461,V.T. SICOMORO ENSAMBLE 6 MESES 750ML,186.0,28.0,158.0,28.0,Vieja Bodega,FALSE
+462,V.T. SICOMORO P.P 750ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+449,V.T. VALLE OCULTO 9 MESES 750 ML,186.0,28.0,158.0,28.0,Vieja Bodega,FALSE
+463,V.T. VALLE OCULTO CABERNET 6M 750ML,185.99,28.0,157.99,28.0,Vieja Bodega,FALSE
+455,V.T. VALLE OCULTO MALBEC 750ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+454,V.T. VALLE OCULTO MERLOT 750 ML,141.0,28.0,113.0,28.0,Vieja Bodega,FALSE
+363,VT Altotinto selección,304.0,28.0,276.0,28.0,Vieja Bodega,FALSE
+361,VT CABERNET MERLOT PERSONALIZADO CIGNO,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+358,VT CABERNET SAUVIGNON PERSONALIZADO PICAHAÑA,171.0,28.0,143.0,28.0,Vieja Bodega,FALSE
+428,VT CABERNET SAUVIGNON PERSONALIZADO SICOMORO,169.0,28.0,141.0,28.0,Vieja Bodega,FALSE
+427,VT ENSAMBLE PERSONALIZADO SICOMORO,214.0,28.0,186.0,28.0,Vieja Bodega,FALSE
+359,Vidente Chardonnay,277.0,28.0,249.0,28.0,Vieja Bodega,FALSE

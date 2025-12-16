@@ -38,7 +38,11 @@ def evaluar_concepto_para_revision(
     motivos = []
     
     # 1. Validar descripción
-    desc = concepto.get("descripcion", "") or concepto.get("nombre", "") or ""
+    # Soportar múltiples variantes de nombre/descripción según extractor
+    desc = (concepto.get("descripcion", "") or 
+            concepto.get("nombre", "") or 
+            concepto.get("nombre_detectado", "") or "")
+    
     if not desc or len(desc.strip()) == 0:
         motivos.append("descripcion_vacia")
     elif len(desc.strip()) < 12:
@@ -83,18 +87,44 @@ def evaluar_concepto_para_revision(
     # 4. Validar precio vs precio guardado en BD (guardián de precios)
     if producto_mapeado is not None and precio_unitario is not None:
         try:
+            # Detectar si es Secretos de la Vid para aplicar validación especial
+            prov_name = _extract_provider_name(datos_factura, producto_mapeado)
+            es_secretos_vid = prov_name and "secretos" in prov_name.lower() and "vid" in prov_name.lower()
+            
             precio_bd = _D(getattr(producto_mapeado, "precio_compra", None))
             if precio_bd and precio_bd > 0:
-                diferencia = precio_unitario - precio_bd
-                diferencia_pct = abs(diferencia) / precio_bd
-                
-                # Ignorar diferencias insignificantes (< $1 absoluto)
-                if abs(diferencia) >= Decimal("1.0"):
-                    # Umbral conservador: 2% más caro, 10% más barato
-                    if diferencia > 0 and diferencia_pct > Decimal("0.02"):  # Más caro
-                        motivos.append(f"precio_mas_alto_bd_diff_{float(diferencia_pct)*100:.1f}pct")
-                    elif diferencia < 0 and diferencia_pct > Decimal("0.10"):  # Más barato
-                        motivos.append(f"precio_mas_bajo_bd_diff_{float(diferencia_pct)*100:.1f}pct")
+                # Validación especial para Secretos de la Vid
+                if es_secretos_vid:
+                    # El extractor de Secretos de la Vid ya calcula el precio final
+                    # (con IEPS 26.5%, IVA 16% y descuento 24% aplicados)
+                    # Entonces comparamos directamente
+                    diferencia_abs = abs(precio_unitario - precio_bd)
+                    diferencia_pct = diferencia_abs / precio_bd if precio_bd else Decimal("0")
+                    
+                    # Secretos de la Vid: ser estricto en ambas direcciones
+                    # - Más bajo >5%: raro con descuento fijo del 24%
+                    # - Más alto >3%: puede ser licor, error, o falta de descuento
+                    
+                    if precio_unitario < precio_bd:
+                        # Precio más BAJO
+                        if diferencia_pct > Decimal("0.05"):  # >5%
+                            motivos.append(f"precio_mas_bajo_sospechoso_{float(diferencia_pct)*100:.1f}pct_${float(diferencia_abs):.2f}")
+                    else:
+                        # Precio más ALTO
+                        if diferencia_pct > Decimal("0.03"):  # >3%
+                            motivos.append(f"precio_mas_alto_sospechoso_{float(diferencia_pct)*100:.1f}pct_${float(diferencia_abs):.2f}")
+                else:
+                    # Validación estándar para otros proveedores
+                    diferencia = precio_unitario - precio_bd
+                    diferencia_pct = abs(diferencia) / precio_bd
+                    
+                    # Ignorar diferencias insignificantes (< $1 absoluto)
+                    if abs(diferencia) >= Decimal("1.0"):
+                        # Umbral conservador: 2% más caro, 10% más barato
+                        if diferencia > 0 and diferencia_pct > Decimal("0.02"):  # Más caro
+                            motivos.append(f"precio_mas_alto_bd_diff_{float(diferencia_pct)*100:.1f}pct")
+                        elif diferencia < 0 and diferencia_pct > Decimal("0.10"):  # Más barato
+                            motivos.append(f"precio_mas_bajo_bd_diff_{float(diferencia_pct)*100:.1f}pct")
         except Exception:
             # No romper validación si falla comparación de precios
             pass
@@ -216,53 +246,54 @@ def evaluar_totales_factura(datos_extraidos: Dict[str, Any]) -> List[str]:
     """
     Valida los totales de la factura completa.
     
+    Validación principal: Suma(cantidad × precio_unitario) ≈ Total factura
+    Tolerancia: <1% para manejar redondeos
+    
     Args:
-        datos_extraidos: dict completo del extractor con conceptos, subtotal, iva, total
+        datos_extraidos: dict completo del extractor con conceptos/productos y total
     
     Returns:
         Lista de strings con motivos de revisión a nivel factura.
     """
     motivos = []
     
-    subtotal = _D(datos_extraidos.get("subtotal"))
-    iva = _D(datos_extraidos.get("iva"))
-    total = _D(datos_extraidos.get("total"))
+    total_factura = _D(datos_extraidos.get("total"))
     conceptos = datos_extraidos.get("conceptos") or datos_extraidos.get("productos") or []
     
-    # 1. Validar suma de importes = subtotal
-    if subtotal and conceptos:
-        suma_importes = Decimal("0")
-        for c in conceptos:
-            imp = _D(c.get("importe"))
-            if not imp:
-                q = _D(c.get("cantidad"))
-                pu = _D(c.get("precio_unitario"))
-                try:
-                    if q is not None and pu is not None:
-                        imp = q * pu
-                except Exception:
-                    imp = None
-            if imp:
-                suma_importes += imp
-        
-        try:
-            diferencia = abs(subtotal - suma_importes)
-            diferencia_pct = diferencia / subtotal if subtotal else Decimal("1")
-            if diferencia_pct > Decimal("0.02"):  # Tolerancia 2%
-                motivos.append(f"suma_importes_no_coincide_subtotal_diff_{float(diferencia_pct)*100:.1f}pct")
-        except Exception:
-            motivos.append("error_validacion_suma_importes")
+    if not total_factura or not conceptos:
+        return motivos  # No hay datos suficientes para validar
     
-    # 2. Validar subtotal + IVA ≈ total
-    if subtotal and total:
-        total_calculado = subtotal + (iva or Decimal("0"))
-        try:
-            diferencia = abs(total - total_calculado)
-            diferencia_pct = diferencia / total if total else Decimal("1")
-            if diferencia_pct > Decimal("0.02"):  # Tolerancia 2%
-                motivos.append(f"subtotal_mas_iva_no_coincide_total_diff_{float(diferencia_pct)*100:.1f}pct")
-        except Exception:
-            motivos.append("error_validacion_totales")
+    # Calcular suma de productos: cantidad × precio_unitario
+    suma_productos = Decimal("0")
+    productos_validos = 0
+    
+    for c in conceptos:
+        cantidad = _D(c.get("cantidad"))
+        precio_unitario = _D(c.get("precio_unitario"))
+        
+        if cantidad is not None and precio_unitario is not None:
+            importe = cantidad * precio_unitario
+            suma_productos += importe
+            productos_validos += 1
+    
+    if productos_validos == 0:
+        motivos.append("no_se_pueden_calcular_importes_productos")
+        return motivos
+    
+    # Validar: suma_productos ≈ total_factura (tolerancia <1%)
+    try:
+        diferencia = abs(total_factura - suma_productos)
+        diferencia_pct = (diferencia / total_factura) if total_factura else Decimal("1")
+        
+        if diferencia_pct > Decimal("0.01"):  # Tolerancia 1%
+            motivos.append(
+                f"suma_productos_no_coincide_total_"
+                f"esperado_{float(total_factura):.2f}_"
+                f"calculado_{float(suma_productos):.2f}_"
+                f"diff_{float(diferencia_pct)*100:.2f}pct"
+            )
+    except Exception as e:
+        motivos.append(f"error_validacion_totales_{str(e)}")
     
     # 3. Número atípico de líneas (opcional, comentado por ahora)
     # num_lineas = len(conceptos)
@@ -302,11 +333,34 @@ def aplicar_validaciones_a_compra(
         "lineas_revision": []
     }
     
+    # Validación especial para Secretos de la Vid: detectar IEPS especiales (licores)
+    proveedor = datos_extraidos.get("proveedor")
+    prov_name = ""
+    if hasattr(proveedor, "nombre"):
+        prov_name = proveedor.nombre.lower()
+    elif isinstance(proveedor, str):
+        prov_name = proveedor.lower()
+    
+    es_secretos_vid = "secretos" in prov_name and "vid" in prov_name
+    
+    if es_secretos_vid:
+        ieps_2 = _D(datos_extraidos.get("ieps_2_importe", 0)) or Decimal("0")
+        ieps_3 = _D(datos_extraidos.get("ieps_3_importe", 0)) or Decimal("0")
+        
+        if ieps_2 > 0 or ieps_3 > 0:
+            resultado["requiere_revision_compra"] = True
+            motivos_licor = []
+            if ieps_2 > 0:
+                motivos_licor.append(f"contiene_ieps_30pct_${float(ieps_2):.2f}")
+            if ieps_3 > 0:
+                motivos_licor.append(f"contiene_licor_ieps_53pct_${float(ieps_3):.2f}")
+            resultado["motivos_compra"].extend(motivos_licor)
+    
     # Validar totales de factura
     motivos_factura = evaluar_totales_factura(datos_extraidos)
     if motivos_factura:
         resultado["requiere_revision_compra"] = True
-        resultado["motivos_compra"] = motivos_factura
+        resultado["motivos_compra"].extend(motivos_factura)
     
     # Validar cada línea
     for item in productos_mapeados:

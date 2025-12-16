@@ -77,11 +77,15 @@ def calcular_agregados_periodo_ventas(queryset: QuerySet, fecha_inicio=None, fec
         total_venta=Sum('total')
     )
     
-    # Calcular costo total manualmente para evitar JOINs problemáticos
+    # Calcular costo total y transporte manualmente para evitar JOINs problemáticos
     costo_total = Decimal('0')
+    transporte_total = Decimal('0')
     for factura in queryset:
         for detalle in factura.detalles.all():
             costo_total += (detalle.precio_compra or 0) * (detalle.cantidad or 0)
+            # Calcular transporte: costo_transporte * cantidad
+            costo_transporte = getattr(detalle.producto, 'costo_transporte', 0) or 0
+            transporte_total += Decimal(str(costo_transporte)) * (detalle.cantidad or 0)
     
     # Optimizar con prefetch_related DESPUÉS de la agregación
     queryset = queryset.prefetch_related("detalles__producto")
@@ -106,6 +110,7 @@ def calcular_agregados_periodo_ventas(queryset: QuerySet, fecha_inicio=None, fec
     return {
         'total_venta': float(total_venta),
         'costo_total': float(costo_total),
+        'transporte_total': float(transporte_total),
         'ganancia_total': float(ganancia_total),
         'productos_personalizados': productos_personalizados,
         'productos_no_personalizados': productos_no_personalizados,
@@ -123,9 +128,18 @@ def generar_dict_reporte_factura(factura) -> Dict[str, Any]:
     Returns:
         Dict con datos de la factura para reporte
     """
-    # Calcular costo y ganancia
+    # Calcular costo, transporte y ganancia
     costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in factura.detalles.all())
+    transporte = sum(
+        (d.cantidad or 0) * (getattr(d.producto, 'costo_transporte', 0) or 0)
+        for d in factura.detalles.all()
+    )
     ganancia = (factura.total or 0) - costo
+    
+    # Calcular porcentaje de ganancia
+    porcentaje_ganancia = 0
+    if factura.total and factura.total > 0:
+        porcentaje_ganancia = (ganancia / factura.total) * 100
     
     # Agrupar productos por personalizado/no personalizado
     pers, no_pers = {}, {}
@@ -140,7 +154,9 @@ def generar_dict_reporte_factura(factura) -> Dict[str, Any]:
         "fecha": factura.fecha_facturacion.strftime("%d-%b-%Y"),
         "total_venta": factura.total or 0,
         "costo_proveedores": costo,
+        "transporte": transporte,
         "ganancia": ganancia,
+        "porcentaje_ganancia": porcentaje_ganancia,
         "productos_personalizados": pers or "Ninguno",
         "productos_no_personalizados": no_pers or "Ninguno",
     }

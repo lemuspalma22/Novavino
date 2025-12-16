@@ -145,14 +145,71 @@ def registrar_compra_automatizada(datos_extraidos: dict) -> Compra:
                     instancia.requiere_revision_manual = True
                     instancia.motivo_revision = ";".join(info_validacion.get("motivos", []))
                     instancia.save(update_fields=["requiere_revision_manual", "motivo_revision"])
+                    print(f"[VALIDACIÓN] Línea marcada para revisión: {instancia.producto.nombre} - Motivos: {instancia.motivo_revision}")
+        
+        # Validación adicional: Comparar suma esperada (BD) vs total factura
+        total_factura = compra.total or Decimal("0")
+        suma_esperada_bd = Decimal("0")
+        
+        for prod_map in productos_mapeados:
+            instancia = prod_map.get("compra_producto_instance")
+            if instancia and instancia.producto:
+                cantidad = instancia.cantidad or 0
+                precio_bd = instancia.producto.precio_compra or Decimal("0")
+                suma_esperada_bd += cantidad * precio_bd
+        
+        if total_factura and suma_esperada_bd:
+            diferencia = abs(total_factura - suma_esperada_bd)
+            diferencia_pct = (diferencia / total_factura) if total_factura else Decimal("0")
+            
+            if diferencia_pct > Decimal("0.01"):  # >1% diferencia
+                motivo_descuadre = (
+                    f"total_no_cuadra_con_bd_"
+                    f"esperado_{float(suma_esperada_bd):.2f}_"
+                    f"factura_{float(total_factura):.2f}_"
+                    f"diff_{float(diferencia_pct)*100:.2f}pct"
+                )
+                
+                if not compra.requiere_revision_manual:
+                    compra.requiere_revision_manual = True
+                    compra.estado_revision = "pendiente"
+                
+                # Agregar motivo si no existe
+                motivos_actuales = resultado_validacion.get('motivos_compra', [])
+                if motivo_descuadre not in motivos_actuales:
+                    motivos_actuales.append(motivo_descuadre)
+                    resultado_validacion['motivos_compra'] = motivos_actuales
+                
+                print(f"[VALIDACIÓN] Descuadre de totales: Suma BD=${suma_esperada_bd:.2f} vs Factura=${total_factura:.2f} ({float(diferencia_pct)*100:.2f}%)")
         
         # Marcar la compra si requiere revisión
-        if resultado_validacion.get("requiere_revision_compra"):
+        if resultado_validacion.get("requiere_revision_compra") or compra.requiere_revision_manual:
             compra.requiere_revision_manual = True
             compra.estado_revision = "pendiente"
             compra.save(update_fields=["requiere_revision_manual", "estado_revision"])
+            print(f"[VALIDACIÓN] Compra {compra.folio} marcada para revisión - Motivos: {resultado_validacion.get('motivos_compra')}")
+            
+            # Si es por IEPS especial (licor), marcar TODAS las líneas para revisión
+            motivos_compra = resultado_validacion.get('motivos_compra', [])
+            tiene_ieps_especial = any('ieps_30pct' in m or 'ieps_53pct' in m for m in motivos_compra)
+            
+            if tiene_ieps_especial:
+                print(f"[VALIDACIÓN] Factura contiene licor (IEPS especial) - Marcando todas las líneas")
+                for prod_map in productos_mapeados:
+                    instancia = prod_map.get("compra_producto_instance")
+                    if instancia and not instancia.requiere_revision_manual:
+                        instancia.requiere_revision_manual = True
+                        instancia.motivo_revision = "toda_factura_requiere_revision_por_contener_licor_ieps_30pct_o_53pct"
+                        instancia.save(update_fields=["requiere_revision_manual", "motivo_revision"])
+                        print(f"[VALIDACION]   - {instancia.producto.nombre} marcado para revision")
+        else:
+            print(f"[VALIDACIÓN] Compra {compra.folio} - Sin problemas detectados")
     except Exception as e:
-        # No romper el flujo si falla la validación
-        print(f"[WARNING] Error en validaciones automáticas: {e}")
+        # No romper el flujo si falla la validación, pero mostrar error completo
+        import traceback
+        print(f"[ERROR] Error en validaciones automáticas: {e}")
+        print(f"[ERROR] Traceback completo:")
+        print(traceback.format_exc())
+        print(f"[WARNING] Continuando sin validaciones...")
 
     return compra

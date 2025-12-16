@@ -88,6 +88,11 @@ def corte_contable(request):
     for f in qs:
         reporte.append(generar_dict_reporte_factura(f))
 
+    # Calcular porcentaje de ganancia total
+    porcentaje_ganancia_total = 0
+    if agregados['total_venta'] > 0:
+        porcentaje_ganancia_total = (agregados['ganancia_total'] / agregados['total_venta']) * 100
+    
     return render(request, "ventas/corte.html", {
         "modo": "contable",
         "facturas": qs,
@@ -96,7 +101,9 @@ def corte_contable(request):
         "totales": {
             "total_venta": agregados['total_venta'],
             "total_costo_proveedores": agregados['costo_total'],
+            "total_transporte": agregados['transporte_total'],
             "total_ganancia": agregados['ganancia_total'],
+            "porcentaje_ganancia": porcentaje_ganancia_total,
         },
     })
 
@@ -125,6 +132,11 @@ def corte_flujo(request):
             reporte_dict["fecha"] = f.fecha_pago.strftime("%d-%b-%Y")
         reporte.append(reporte_dict)
 
+    # Calcular porcentaje de ganancia total
+    porcentaje_ganancia_total = 0
+    if agregados['total_venta'] > 0:
+        porcentaje_ganancia_total = (agregados['ganancia_total'] / agregados['total_venta']) * 100
+    
     return render(request, "ventas/corte.html", {
         "modo": "flujo",
         "facturas": qs,
@@ -133,7 +145,9 @@ def corte_flujo(request):
         "totales": {
             "total_venta": agregados['total_venta'],
             "total_costo_proveedores": agregados['costo_total'],
+            "total_transporte": agregados['transporte_total'],
             "total_ganancia": agregados['ganancia_total'],
+            "porcentaje_ganancia": porcentaje_ganancia_total,
         },
     })
 
@@ -161,16 +175,23 @@ def exportar_csv(request):
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="corte_{modo}.csv"'
     w = csv.writer(response)
-    w.writerow(["Folio", "Cliente", "Fecha", "Total Venta", "Costo Proveedores",
-                "Ganancia", "Productos Personalizados", "Productos No Personalizados"])
+    w.writerow(["Folio", "Cliente", "Fecha", "Total Venta", "Costo Proveedores", "Transporte",
+                "Ganancia", "Porcentaje Ganancia", "Productos Personalizados", "Productos No Personalizados"])
 
     for f in qs:
         costo = sum(d.cantidad * d.precio_compra for d in f.detalles.all())
+        transporte = sum(
+            d.cantidad * (getattr(d.producto, 'costo_transporte', 0) or 0)
+            for d in f.detalles.all()
+        )
         gan = (f.total or 0) - costo
+        porcentaje_ganancia = 0
+        if f.total and f.total > 0:
+            porcentaje_ganancia = (gan / f.total) * 100
         pers = sum(d.cantidad for d in f.detalles.all() if getattr(d.producto, "es_personalizado", False))
         no_pers = sum(d.cantidad for d in f.detalles.all() if not getattr(d.producto, "es_personalizado", False))
         fecha = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
-        w.writerow([f.folio_factura, f.cliente, fecha, f.total, costo, gan, pers, no_pers])
+        w.writerow([f.folio_factura, f.cliente, fecha, f.total, costo, transporte, gan, porcentaje_ganancia, pers, no_pers])
 
     return response
 
@@ -193,11 +214,18 @@ def exportar_pdf(request):
     y = 730
     for f in qs:
         costo = sum(d.cantidad * d.precio_compra for d in f.detalles.all())
+        transporte = sum(
+            d.cantidad * (getattr(d.producto, 'costo_transporte', 0) or 0)
+            for d in f.detalles.all()
+        )
         gan = (f.total or 0) - costo
+        porcentaje_ganancia = 0
+        if f.total and f.total > 0:
+            porcentaje_ganancia = (gan / f.total) * 100
         fecha = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
 
         p.drawString(80, y, f"Factura {f.folio_factura} - Cliente: {f.cliente}")
-        p.drawString(80, y-15, f"Fecha: {fecha}  |  Total: {f.total}  |  Costo: {costo}  |  Ganancia: {gan}")
+        p.drawString(80, y-15, f"Fecha: {fecha}  |  Total: {f.total}  |  Costo: {costo}  |  Transporte: {transporte}  |  Ganancia: {gan}  |  Porcentaje Ganancia: {porcentaje_ganancia}%")
         y -= 40
         if y < 80:
             p.showPage()
@@ -237,9 +265,18 @@ def corte_semanal(request):
     qs = qs.prefetch_related("detalles__producto")
 
     reporte = []
+    total_transporte_global = 0
     for f in qs:
         costo = sum((d.cantidad or 0) * (d.precio_compra or 0) for d in f.detalles.all())
+        transporte = sum(
+            (d.cantidad or 0) * (getattr(d.producto, 'costo_transporte', 0) or 0)
+            for d in f.detalles.all()
+        )
+        total_transporte_global += transporte
         ganancia = (f.total or 0) - costo
+        porcentaje_ganancia = 0
+        if f.total and f.total > 0:
+            porcentaje_ganancia = (ganancia / f.total) * 100
         pers, no_pers = {}, {}
         for d in f.detalles.all():
             nombre = d.producto.nombre
@@ -254,12 +291,19 @@ def corte_semanal(request):
             "fecha": fecha_txt,
             "total_venta": float(f.total or 0),
             "costo_proveedores": float(costo),
+            "transporte": float(transporte),
             "ganancia": float(ganancia),
+            "porcentaje_ganancia": float(porcentaje_ganancia),
             "productos_personalizados": pers or "Ninguno",
             "productos_no_personalizados": no_pers or "Ninguno",
         })
 
     tot_vta, tot_costo, tot_gan = _totales(qs)
+    
+    # Calcular porcentaje de ganancia total
+    porcentaje_ganancia_total = 0
+    if tot_vta > 0:
+        porcentaje_ganancia_total = (tot_gan / tot_vta) * 100
 
     return JsonResponse({
         "modo": modo,
@@ -267,7 +311,9 @@ def corte_semanal(request):
         "totales": {
             "total_venta": float(tot_vta),
             "total_costo_proveedores": float(tot_costo),
+            "total_transporte": float(total_transporte_global),
             "total_ganancia": float(tot_gan),
+            "porcentaje_ganancia": float(porcentaje_ganancia_total),
             "productos_personalizados": "Ninguno",
             "productos_no_personalizados": "Ninguno",
         },

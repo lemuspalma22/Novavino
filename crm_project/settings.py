@@ -3,6 +3,11 @@ import os
 import pymysql
 from urllib.parse import urlparse
 import pymysql
+
+# Cargar variables de entorno desde .env
+import dotenv
+dotenv.load_dotenv()
+
 pymysql.install_as_MySQLdb()
 
 

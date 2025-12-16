@@ -76,6 +76,7 @@ def extraer_factura_novavino(texto: str) -> dict:
         "fecha_emision": None,
         "cliente": None,
         "total": None,
+        "metodo_pago": None,
         "productos": []
     }
     lines = [ln.rstrip() for ln in texto.splitlines()]
@@ -103,6 +104,11 @@ def extraer_factura_novavino(texto: str) -> dict:
             if i + 1 < len(lines):
                 data["cliente"] = lines[i + 1].strip()
             break
+
+    # Método de pago (PUE/PPD)
+    m_metodo = re.search(r"M[ée]todo de pago[:\s]+(PUE|PPD)", texto, re.IGNORECASE)
+    if m_metodo:
+        data["metodo_pago"] = m_metodo.group(1).upper()
 
     # Total robusto
     total_extraido = extraer_total(texto)

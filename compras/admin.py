@@ -1,7 +1,11 @@
+
 from django.contrib import admin
+from django.contrib import messages
 from django.utils.html import format_html
-from django.urls import path
+from django.urls import path, reverse
 from django.middleware.csrf import get_token
+from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from .models import Compra, Proveedor, CompraProducto
 from inventario.models import Producto, ProductoNoReconocido
 from .views_pnr import asignar_pnr_view, crear_producto_pnr_view
@@ -79,18 +83,124 @@ class CompraAdmin(admin.ModelAdmin):
     estado_detallado.short_description = "Estado revisión"
     
     def get_urls(self):
-        """Registrar URLs custom para procesar PNR."""
+        """Registrar URLs custom para procesar PNR y procesar facturas Drive."""
         urls = super().get_urls()
         custom_urls = [
+            path('procesar-drive/', self.admin_site.admin_view(self.procesar_drive_view), name='compras_compra_procesar_drive'),
             path('<int:object_id>/asignar_pnr/', self.admin_site.admin_view(asignar_pnr_view), name='compras_compra_asignar_pnr'),
             path('<int:object_id>/crear_producto_pnr/', self.admin_site.admin_view(crear_producto_pnr_view), name='compras_compra_crear_producto_pnr'),
         ]
         return custom_urls + urls
     
+    def changelist_view(self, request, extra_context=None):
+        """Agregar botón personalizado en la vista de lista."""
+        extra_context = extra_context or {}
+        extra_context['show_drive_button'] = True
+        return super().changelist_view(request, extra_context)
+    
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """Guardar request para que readonly_fields puedan acceder a él."""
         self._current_request = request
         return super().change_view(request, object_id, form_url, extra_context)
+    
+    def procesar_drive_view(self, request):
+        """
+        Vista custom para procesar facturas pendientes desde Google Drive.
+        No requiere selección de items.
+        """
+        try:
+            from compras.utils.drive_processor import DriveInvoiceProcessor
+            
+            # Mostrar mensaje de inicio
+            self.message_user(
+                request,
+                "🔄 Iniciando procesamiento de facturas desde Google Drive...",
+                level=messages.INFO
+            )
+            
+            # Crear procesador
+            processor = DriveInvoiceProcessor(validation_mode="lenient")
+            
+            # Procesar todas las facturas
+            resultado = processor.process_all_invoices(move_files=True)
+            
+            # Preparar mensaje de resumen
+            total = resultado["total"]
+            success = resultado["success"]
+            duplicate = resultado["duplicate"]
+            error = resultado["error"]
+            
+            if total == 0:
+                self.message_user(
+                    request,
+                    "⚠️ No se encontraron facturas pendientes en Google Drive.",
+                    level=messages.WARNING
+                )
+            else:
+                # Mensaje principal de éxito
+                if error == 0:
+                    nivel = messages.SUCCESS
+                    icono = "✅"
+                elif success > 0:
+                    nivel = messages.WARNING
+                    icono = "⚠️"
+                else:
+                    nivel = messages.ERROR
+                    icono = "❌"
+                
+                mensaje_principal = (
+                    f"{icono} Procesamiento completado: "
+                    f"{success} registradas, "
+                    f"{duplicate} duplicadas, "
+                    f"{error} errores "
+                    f"(de {total} archivos)"
+                )
+                self.message_user(request, mensaje_principal, level=nivel)
+                
+                # Mensajes detallados de errores
+                if error > 0:
+                    detalles_error = [
+                        d for d in resultado["details"] 
+                        if d["status"] == "error"
+                    ]
+                    for detalle in detalles_error[:5]:  # Mostrar max 5 errores
+                        error_msg = f"❌ Error en {detalle['file']}: {detalle['error'][:100]}"
+                        self.message_user(request, error_msg, level=messages.ERROR)
+                    
+                    if error > 5:
+                        self.message_user(
+                            request,
+                            f"⚠️ ... y {error - 5} errores más. Revisa la carpeta 'Compras_Errores' en Drive.",
+                            level=messages.WARNING
+                        )
+                
+                # Mensaje informativo de duplicadas
+                if duplicate > 0:
+                    self.message_user(
+                        request,
+                        f"ℹ️ {duplicate} factura(s) ya existían en la base de datos (omitidas).",
+                        level=messages.INFO
+                    )
+                    
+        except ImportError as e:
+            self.message_user(
+                request,
+                f"❌ Error: No se pudo importar el módulo drive_processor. {str(e)}",
+                level=messages.ERROR
+            )
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            self.message_user(
+                request,
+                f"❌ Error inesperado al procesar facturas: {str(e)}",
+                level=messages.ERROR
+            )
+            # Log detallado en consola para debugging
+            print(f"\n{'='*80}\nERROR EN PROCESAR_DRIVE_VIEW:\n{error_trace}\n{'='*80}\n")
+        
+        # Redirigir de vuelta a la lista de compras
+        return HttpResponseRedirect(reverse('admin:compras_compra_changelist'))
     
     def resumen_revision(self, obj):
         """Widget de resumen de revisión en el detalle de la compra."""
@@ -145,8 +255,13 @@ class CompraAdmin(admin.ModelAdmin):
             html_parts.append(f'<p style="margin: 8px 0;"><strong>⚠️ Líneas con flags:</strong> {num_lineas_flags}</p>')
             html_parts.append('<ul style="margin: 5px 0; padding-left: 20px;">')
             for linea in lineas_con_flags[:10]:  # Limitar a 10 para no saturar
-                motivos = linea.motivo_revision or "sin motivo especificado"
-                html_parts.append(f'<li>{linea.producto.nombre}: <em>{motivos}</em></li>')
+                motivos_raw = linea.motivo_revision or "sin motivo especificado"
+                # Formatear el motivo para mejor legibilidad
+                if motivos_raw == "toda_factura_requiere_revision_por_contener_licor_ieps_30pct_o_53pct":
+                    motivos = "Esta factura contiene otro producto con licor (IEPS 30% o 53%), por lo que toda la factura requiere revisión manual"
+                else:
+                    motivos = motivos_raw.replace("_", " ").capitalize()
+                html_parts.append(f'<li>{linea.producto.nombre}: <em style="color: #d32f2f;">{motivos}</em></li>')
             if num_lineas_flags > 10:
                 html_parts.append(f'<li><em>... y {num_lineas_flags - 10} más</em></li>')
             html_parts.append('</ul>')
@@ -206,13 +321,25 @@ class CompraAdmin(admin.ModelAdmin):
                     f'</div>'
                 )
                 
-                # Formulario 2: Crear nuevo producto (TEMPORALMENTE DESHABILITADO para debugging)
+                # Formulario 2: Crear nuevo producto
+                # Escapar el nombre para HTML (especialmente comillas)
+                import html
+                nombre_escapado = html.escape(pnr.nombre_detectado or "", quote=True)
+                
                 html_parts.append(
                     f'<div style="flex: 1; min-width: 250px;">'
-                    f'<p style="padding: 10px; border: 1px solid #ccc; background: #f9f9f9; color: #666; font-size: 0.85em; border-radius: 4px;">'
-                    f'<strong>Crear producto nuevo:</strong><br>'
-                    f'Función temporalmente deshabilitada. Usa el formulario de asignación.'
-                    f'</p>'
+                    f'<label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9em; color: #555;">Crear producto nuevo:</label>'
+                    f'<input type="text" id="nombre_{pnr_id_val}" placeholder="Nombre del producto" value="{nombre_escapado}" style="width: 100%; padding: 6px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.85em;" />'
+                    f'<input type="number" id="precio_compra_{pnr_id_val}" placeholder="Precio compra" value="{float(pnr.precio_unitario or 0):.2f}" step="0.01" style="width: 100%; padding: 6px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.85em;" />'
+                    f'<input type="number" id="precio_venta_{pnr_id_val}" placeholder="Precio venta" step="0.01" style="width: 100%; padding: 6px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.85em;" />'
+                    f'<button type="button" '
+                    f'data-pnr-id="{pnr_id_val}" '
+                    f'data-compra-id="{obj_id_val}" '
+                    f'data-csrf="{csrf_token}" '
+                    f'onclick="crearProductoPNR(this)" '
+                    f'style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; width: 100%;">'
+                    f'+ Crear producto'
+                    f'</button>'
                     f'</div>'
                 )
                 
@@ -229,19 +356,147 @@ class CompraAdmin(admin.ModelAdmin):
         
         if num_productos > 0:
             html_parts.append(f'<p style="margin: 8px 0; margin-top: 15px;"><strong>✓ Productos detectados:</strong> {num_productos}</p>')
+            # Nota explicativa sobre P/U
+            prov_nombre = obj.proveedor.nombre if obj.proveedor else ""
+            if "secretos" in prov_nombre.lower():
+                html_parts.append(
+                    '<p style="margin: 4px 0 8px 0; padding: 6px 10px; background-color: #e7f3ff; border-left: 3px solid #2196F3; font-size: 0.8em; color: #0d47a1;">'
+                    '<strong>Nota:</strong> Para Secretos de la Vid, el <strong>P/U</strong> mostrado ya incluye IEPS 26.5%, IVA 16% y descuento 24% aplicados.'
+                    '</p>'
+                )
             html_parts.append('<ul style="margin: 5px 0; padding-left: 20px; font-size: 0.9em; color: #555;">')
+            
+            # Calcular suma total usando PRECIO DE BD (no precio extraído)
+            from decimal import Decimal
+            suma_esperada_bd = Decimal("0")
+            suma_extraida_pdf = Decimal("0")
+            hay_discrepancias_precio = False
+            
             for linea in productos_compra[:20]:  # Limitar a 20 para no saturar
                 nombre = linea.producto.nombre
-                cantidad = linea.cantidad
-                precio_u = linea.precio_unitario
-                importe = cantidad * precio_u if cantidad and precio_u else 0
-                html_parts.append(
-                    f'<li>{nombre} | <strong>Cant:</strong> {cantidad} | '
-                    f'<strong>P/U:</strong> ${precio_u:,.2f} | <strong>Importe:</strong> ${importe:,.2f}</li>'
-                )
+                cantidad = linea.cantidad or 0
+                
+                # Precio extraído del PDF (en CompraProducto.precio_unitario)
+                precio_pdf = linea.precio_unitario or Decimal("0")
+                
+                # Precio de BD (en Producto.precio_compra)
+                precio_bd = linea.producto.precio_compra or Decimal("0")
+                
+                # Calcular importes
+                importe_pdf = cantidad * precio_pdf
+                importe_bd = cantidad * precio_bd
+                
+                suma_extraida_pdf += importe_pdf
+                suma_esperada_bd += importe_bd
+                
+                # Detectar si hay diferencia de precio
+                diff_precio = abs(precio_pdf - precio_bd)
+                diff_precio_pct = (diff_precio / precio_bd * 100) if precio_bd else Decimal("0")
+                
+                # Clasificar nivel de discrepancia
+                if diff_precio_pct > Decimal("1.0"):
+                    # Error grande (>1%)
+                    hay_discrepancias_precio = True
+                    color = "#d32f2f"  # Rojo
+                    icono = "⚠"
+                elif diff_precio_pct > Decimal("0.1"):
+                    # Diferencia notable (>0.1%)
+                    hay_discrepancias_precio = True
+                    color = "#f57c00"  # Naranja
+                    icono = "⚠"
+                elif diff_precio > Decimal("0.01"):
+                    # Diferencia mínima (redondeo)
+                    color = "#888"  # Gris
+                    icono = ""
+                else:
+                    # Sin diferencia
+                    color = None
+                    icono = ""
+                
+                # Mostrar SIEMPRE precio BD entre paréntesis si difiere
+                if color:
+                    html_parts.append(
+                        f'<li style="color: {color if diff_precio_pct > 1 else "inherit"};">'
+                        f'{nombre} | '
+                        f'<strong>{cantidad}</strong> × '
+                        f'<strong>${precio_pdf:,.2f}</strong> '
+                        f'<span style="color: {color}; font-size: 0.85em;">(BD: ${precio_bd:,.2f})</span> = '
+                        f'<strong>${importe_pdf:,.2f}</strong> '
+                        f'{icono}</li>'
+                    )
+                else:
+                    html_parts.append(
+                        f'<li>{nombre} | '
+                        f'<strong>{cantidad}</strong> × '
+                        f'<strong>${precio_pdf:,.2f}</strong> = '
+                        f'<strong>${importe_pdf:,.2f}</strong></li>'
+                    )
+            
             if num_productos > 20:
-                html_parts.append(f'<li><em>... y {num_productos - 20} más</em></li>')
+                html_parts.append(f'<li><em>... y {num_productos - 20} más (suma total incluye todos)</em></li>')
+                # Sumar los productos restantes
+                for linea in productos_compra[20:]:
+                    cantidad = linea.cantidad or 0
+                    precio_pdf = linea.precio_unitario or Decimal("0")
+                    precio_bd = linea.producto.precio_compra or Decimal("0")
+                    suma_extraida_pdf += cantidad * precio_pdf
+                    suma_esperada_bd += cantidad * precio_bd
+                    
+                    # Detectar discrepancias en productos no mostrados
+                    diff_precio = abs(precio_pdf - precio_bd)
+                    diff_precio_pct = (diff_precio / precio_bd * 100) if precio_bd else Decimal("0")
+                    if diff_precio_pct > Decimal("0.1"):  # Umbral más sensible
+                        hay_discrepancias_precio = True
+            
             html_parts.append('</ul>')
+            
+            # Mostrar suma total y comparar con factura usando PRECIOS DE BD
+            total_factura = obj.total or Decimal("0")
+            
+            # Comparar suma esperada (BD) vs total factura
+            diferencia = abs(total_factura - suma_esperada_bd)
+            diferencia_pct = (diferencia / total_factura * 100) if total_factura else Decimal("0")
+            
+            # Determinar color según diferencia
+            if diferencia_pct < Decimal("0.5"):
+                color_bg = "#d4edda"  # Verde claro
+                color_border = "#28a745"  # Verde
+                color_text = "#155724"  # Verde oscuro
+                icono = "✓"
+            elif diferencia_pct < Decimal("1.0"):
+                color_bg = "#fff3cd"  # Amarillo claro
+                color_border = "#ffc107"  # Amarillo
+                color_text = "#856404"  # Amarillo oscuro
+                icono = "⚠"
+            else:
+                color_bg = "#f8d7da"  # Rojo claro
+                color_border = "#dc3545"  # Rojo
+                color_text = "#721c24"  # Rojo oscuro
+                icono = "✗"
+            
+            html_parts.append(
+                f'<div style="margin: 10px 0; padding: 10px; background-color: {color_bg}; '
+                f'border-left: 4px solid {color_border}; border-radius: 4px;">'
+                f'<p style="margin: 0; font-size: 0.9em; color: {color_text}; font-weight: bold;">'
+                f'{icono} <strong>Suma esperada (BD):</strong> ${suma_esperada_bd:,.2f}</p>'
+                f'<p style="margin: 4px 0 0 0; font-size: 0.9em; color: {color_text};">'
+                f'<strong>Total factura:</strong> ${total_factura:,.2f}</p>'
+                f'<p style="margin: 4px 0 0 0; font-size: 0.85em; color: {color_text}; font-style: italic;">'
+                f'Diferencia: ${diferencia:,.2f} ({diferencia_pct:.2f}%)'
+                f'</p>'
+            )
+            
+            # Mostrar advertencia adicional si hay discrepancias de precio
+            if hay_discrepancias_precio:
+                html_parts.append(
+                    f'<p style="margin: 8px 0 0 0; padding: 6px; background-color: #fff3cd; '
+                    f'border-radius: 3px; font-size: 0.85em; color: #856404;">'
+                    f'ℹ️ Productos con diferencia de precio BD vs PDF mostrados arriba. '
+                    f'Esto puede ser normal por redondeos o indicar error de facturación.'
+                    f'</p>'
+                )
+            
+            html_parts.append('</div>')
         
         # Mensaje guía
         if num_lineas_flags > 0 or num_pnr > 0:
@@ -287,6 +542,38 @@ class CompraAdmin(admin.ModelAdmin):
                 "document.body.appendChild(form);"
                 "form.submit();"
             "}"
+            "function crearProductoPNR(btn) {"
+                "const pnrId = btn.getAttribute('data-pnr-id');"
+                "const compraId = btn.getAttribute('data-compra-id');"
+                "const csrfToken = btn.getAttribute('data-csrf');"
+                "const nombre = document.getElementById('nombre_' + pnrId).value;"
+                "const precioCompra = document.getElementById('precio_compra_' + pnrId).value;"
+                "const precioVenta = document.getElementById('precio_venta_' + pnrId).value;"
+                "if (!nombre || !precioCompra || !precioVenta) {"
+                    "alert('Completa todos los campos (nombre, precio compra, precio venta)');"
+                    "return;"
+                "}"
+                "const form = document.createElement('form');"
+                "form.method = 'POST';"
+                "form.action = '/admin/compras/compra/' + compraId + '/crear_producto_pnr/';"
+                "const fields = {"
+                    "'csrfmiddlewaretoken': csrfToken,"
+                    "'pnr_id': pnrId,"
+                    "'nombre': nombre,"
+                    "'precio_compra': precioCompra,"
+                    "'precio_venta': precioVenta,"
+                    "'costo_transporte': '0'"
+                "};"
+                "for (const key in fields) {"
+                    "const input = document.createElement('input');"
+                    "input.type = 'hidden';"
+                    "input.name = key;"
+                    "input.value = fields[key];"
+                    "form.appendChild(input);"
+                "}"
+                "document.body.appendChild(form);"
+                "form.submit();"
+            "}"
             "</script>"
         )
         
@@ -297,15 +584,41 @@ class CompraAdmin(admin.ModelAdmin):
         return mark_safe(''.join(html_parts))
     
     def marcar_revisado_ok(self, request, queryset):
-        """Acción para marcar compras como revisadas OK."""
-        updated = queryset.update(estado_revision="revisado_ok")
-        self.message_user(request, f"{updated} compra(s) marcada(s) como 'Revisado OK'.")
+        """Acción para marcar compras como revisadas OK y limpiar flags de líneas."""
+        updated = queryset.update(estado_revision="revisado_ok", requiere_revision_manual=False)
+        
+        # Limpiar flags de todas las líneas de productos de estas compras
+        total_lineas = 0
+        for compra in queryset:
+            lineas_updated = CompraProducto.objects.filter(compra=compra).update(
+                requiere_revision_manual=False,
+                motivo_revision=""
+            )
+            total_lineas += lineas_updated
+        
+        self.message_user(
+            request, 
+            f"{updated} compra(s) marcada(s) como 'Revisado OK' y {total_lineas} línea(s) limpiadas."
+        )
     marcar_revisado_ok.short_description = "Marcar como Revisado OK"
     
     def marcar_revisado_con_cambios(self, request, queryset):
-        """Acción para marcar compras como revisadas con cambios."""
-        updated = queryset.update(estado_revision="revisado_con_cambios")
-        self.message_user(request, f"{updated} compra(s) marcada(s) como 'Revisado con cambios'.")
+        """Acción para marcar compras como revisadas con cambios y limpiar flags de líneas."""
+        updated = queryset.update(estado_revision="revisado_con_cambios", requiere_revision_manual=False)
+        
+        # Limpiar flags de todas las líneas de productos de estas compras
+        total_lineas = 0
+        for compra in queryset:
+            lineas_updated = CompraProducto.objects.filter(compra=compra).update(
+                requiere_revision_manual=False,
+                motivo_revision=""
+            )
+            total_lineas += lineas_updated
+        
+        self.message_user(
+            request, 
+            f"{updated} compra(s) marcada(s) como 'Revisado con cambios' y {total_lineas} línea(s) limpiadas."
+        )
     marcar_revisado_con_cambios.short_description = "Marcar como Revisado con cambios"
 
 # Registro de modelos en el admin

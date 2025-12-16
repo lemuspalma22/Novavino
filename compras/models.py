@@ -2,6 +2,12 @@ from django.db import models
 
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
+    costo_transporte_unitario = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Costo de transporte por unidad/botella. Ej: $15.00 para Secretos de la Vid"
+    )
 
     def __str__(self):
         return self.nombre
@@ -59,6 +65,14 @@ class CompraProducto(models.Model):
     # Campos de revisión manual
     requiere_revision_manual = models.BooleanField(default=False, help_text="Indica si esta línea requiere revisión")
     motivo_revision = models.CharField(max_length=255, blank=True, help_text="Motivos por los que requiere revisión")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['compra', 'producto'],
+                name='unique_compra_producto'
+            )
+        ]
 
     def subtotal(self):
         return self.cantidad * self.precio_unitario
