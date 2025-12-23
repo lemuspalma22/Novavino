@@ -5,6 +5,13 @@ from django.core.exceptions import ValidationError
 from django.db.models.functions import Lower
 from django.apps import apps
 from decimal import Decimal
+from django.conf import settings
+
+# Manager personalizado para productos activos
+class ProductoActivoManager(models.Manager):
+    """Manager que solo devuelve productos activos (no fusionados)."""
+    def get_queryset(self):
+        return super().get_queryset().filter(activo=True)
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -18,9 +25,59 @@ class Producto(models.Model):
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
     es_personalizado = models.BooleanField(default=False, verbose_name="Personalizado")
     stock = models.IntegerField(default=0)
-
+    
+    # Campos para sistema de fusión de productos
+    fusionado_en = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='productos_fusionados',
+        help_text="Producto principal si este fue fusionado"
+    )
+    activo = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="False si fue fusionado o descontinuado"
+    )
+    fecha_fusion = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Cuándo fue fusionado este producto"
+    )
+    
+    # Managers
+    objects = models.Manager()  # Default: incluye TODOS los productos
+    activos = ProductoActivoManager()  # Solo productos activos
+    
+    class Meta:
+        ordering = ['-activo', 'nombre']  # Activos primero, luego por nombre
+    
     def __str__(self):
         return self.nombre
+    
+    # Métodos para gestión de fusiones
+    @property
+    def esta_fusionado(self):
+        """Verifica si este producto fue fusionado."""
+        return self.fusionado_en is not None
+    
+    @property
+    def producto_efectivo(self):
+        """Devuelve el producto principal si está fusionado, o sí mismo."""
+        return self.fusionado_en if self.esta_fusionado else self
+    
+    def get_stock_real(self):
+        """Stock del producto efectivo (útil para mostrar en UI)."""
+        return self.producto_efectivo.stock
+    
+    def tiene_fusionados(self):
+        """Verifica si otros productos fueron fusionados en este."""
+        return self.productos_fusionados.filter(activo=False).exists()
+    
+    def count_fusionados(self):
+        """Cuenta cuántos productos fueron fusionados en este."""
+        return self.productos_fusionados.filter(activo=False).count()
 
 class AliasProducto(models.Model):
     alias = models.CharField(max_length=255, unique=False)  # dejamos unique=False y ponemos UniqueConstraint CI abajo
@@ -96,7 +153,17 @@ class ProductoNoReconocido(models.Model):
         - Si existe Compra con uuid/uuid_sat == uuid_factura, crea detalle (CompraProducto).
         - Evita duplicar con 'movimiento_generado'.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.warning(
+            f"[procesar_a_stock] INICIO PNR={self.id} "
+            f"movimiento_generado={self.movimiento_generado} "
+            f"procesado={self.procesado} producto_id={self.producto_id}"
+        )
+        
         if self.movimiento_generado or not self.procesado or not self.producto_id:
+            logger.warning(f"[procesar_a_stock] SALIENDO TEMPRANO - no cumple condiciones")
             return
 
         # Valores defensivos
@@ -107,7 +174,12 @@ class ProductoNoReconocido(models.Model):
 
         # 1) Aumentar stock del producto (tu modelo Producto tiene campo 'stock')
         prod = self.producto
-        prod.stock = (prod.stock or 0) + int(cant)
+        stock_antes = prod.stock or 0
+        prod.stock = stock_antes + int(cant)
+        logger.warning(
+            f"[procesar_a_stock] SUMANDO STOCK: {prod.nombre} "
+            f"antes={stock_antes} cantidad={int(cant)} despues={prod.stock}"
+        )
         # (opcional) si tienes costo promedio o último costo, podrías actualizarlo aquí
         # Si el proveedor es Vieja Bodega y no se ha configurado costo_transporte, sugerimos 28 por unidad
         try:
@@ -134,6 +206,88 @@ class ProductoNoReconocido(models.Model):
             if hasattr(CompraProducto, "importe"):
                 det_kwargs["importe"] = cant * costo
             CompraProducto.objects.create(**det_kwargs)
+            logger.warning(f"[procesar_a_stock] CompraProducto creado para compra {compra.folio}")
 
+        logger.warning(f"[procesar_a_stock] Marcando movimiento_generado=True para PNR={self.id}")
         self.movimiento_generado = True
         self.save(update_fields=["movimiento_generado"])
+        logger.warning(f"[procesar_a_stock] COMPLETADO PNR={self.id}")
+
+
+class LogFusionProductos(models.Model):
+    """
+    Registro de auditoría para fusiones de productos.
+    Permite trazabilidad completa de quién, cuándo y por qué se fusionaron productos.
+    """
+    producto_principal = models.ForeignKey(
+        Producto,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='fusiones_recibidas',
+        help_text="Producto que absorbió al secundario"
+    )
+    
+    producto_principal_nombre = models.CharField(
+        max_length=200,
+        default="",
+        help_text="Nombre del producto principal al momento de la fusión"
+    )
+    
+    # Guardamos ID y nombre por si el producto se elimina después
+    producto_secundario_id = models.IntegerField(
+        help_text="ID del producto fusionado"
+    )
+    producto_secundario_nombre = models.CharField(
+        max_length=200,
+        help_text="Nombre del producto fusionado al momento de la fusión"
+    )
+    
+    stock_transferido = models.IntegerField(
+        default=0,
+        help_text="Cuánto stock se transfirió"
+    )
+    
+    fecha_fusion = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Cuándo se realizó la fusión"
+    )
+    
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="Usuario que realizó la fusión"
+    )
+    
+    razon = models.TextField(
+        blank=True,
+        help_text="Motivo de la fusión"
+    )
+    
+    revertida = models.BooleanField(
+        default=False,
+        help_text="True si la fusión fue revertida"
+    )
+    
+    fecha_reversion = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Cuándo se revirtió la fusión"
+    )
+    
+    class Meta:
+        ordering = ['-fecha_fusion']
+        verbose_name = "Log de Fusión de Productos"
+        verbose_name_plural = "Logs de Fusión de Productos"
+    
+    def __str__(self):
+        principal_nombre = (
+            self.producto_principal.nombre 
+            if self.producto_principal 
+            else f"{self.producto_principal_nombre} (eliminado)"
+        )
+        return (
+            f"{self.producto_secundario_nombre} → "
+            f"{principal_nombre} "
+            f"({self.fecha_fusion.strftime('%Y-%m-%d')})"
+        )

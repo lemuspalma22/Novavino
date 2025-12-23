@@ -21,6 +21,7 @@
 
 {% block object-tools %}
   <ul class="object-tools">
+    <li><a class="addlink" href="{% url 'admin:inventario_logfusionproductos_changelist' %}">📋 Ver Logs de Fusión</a></li>
     <li><a class="addlink" href="{% url 'exportar_plantilla_csv' %}">📤 Exportar plantilla CSV</a></li>
     <li><a class="addlink" href="{% url 'upload_stock_csv' %}">📥 Actualizar stock (CSV)</a></li>
     <li><a class="addlink" href="{% url 'upload_csv' %}">⬆️ Cargar/actualizar productos (CSV)</a></li>

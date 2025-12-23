@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "ventas.apps.VentasConfig", 
     'compras', 
     'inventario',
+    'reportes',  # Fase 3: Dashboards y reportes
 ]
 
 MIDDLEWARE = [

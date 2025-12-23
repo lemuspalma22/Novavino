@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 from inventario.models import Producto
-from .models import Factura
+from .models import Factura, PagoFactura
 from utils.reportes import calcular_agregados_periodo_ventas, generar_dict_reporte_factura
 
 
@@ -110,26 +110,51 @@ def corte_contable(request):
 
 @require_http_methods(["GET"])
 def corte_flujo(request):
-    """Corte por fecha de PAGO (solo pagadas)."""
+    """Corte por fecha de PAGO (incluye pagos parciales)."""
     fi, ff = _rangos(request)
     
-    # Usar la nueva función abstraída
+    # Usar la nueva función abstraída que ahora considera pagos parciales
     agregados = calcular_agregados_periodo_ventas(
-        Factura.objects.filter(fecha_pago__isnull=False),  # Query defensivo
+        Factura.objects.all(),  # Sin filtro previo, se filtra en calcular_agregados
         fi, ff,
         campo_fecha='fecha_pago',
-        solo_pagadas=True
+        solo_pagadas=False  # Ahora considera pagos parciales
     )
     
     qs = agregados['queryset']
     
-    # Armar reporte usando función abstraída
+    # Armar reporte usando función abstraída y agregar info de pagos
     reporte = []
     for f in qs:
         reporte_dict = generar_dict_reporte_factura(f)
-        # Ajustar fecha para modo flujo (fecha_pago en lugar de fecha_facturacion)
-        if f.fecha_pago:
-            reporte_dict["fecha"] = f.fecha_pago.strftime("%d-%b-%Y")
+        
+        # Obtener pagos en el periodo para esta factura
+        pagos_periodo = []
+        if fi and ff:
+            pagos_periodo = PagoFactura.objects.filter(
+                factura=f,
+                fecha_pago__range=(fi, ff)
+            ).order_by('fecha_pago')
+        
+        # Sumar pagos en el periodo
+        total_pagos_periodo = sum(p.monto for p in pagos_periodo)
+        
+        # Ajustar fecha y monto para modo flujo
+        if pagos_periodo:
+            # Usar fecha del primer pago en el periodo
+            reporte_dict["fecha"] = pagos_periodo[0].fecha_pago.strftime("%d-%b-%Y")
+            # El total_venta en flujo debe ser el monto pagado en el periodo
+            reporte_dict["total_venta_original"] = f.total  # Guardar total original
+            reporte_dict["total_venta"] = float(total_pagos_periodo)
+            reporte_dict["pagos_periodo"] = [
+                {
+                    "fecha": p.fecha_pago.strftime("%d-%b-%Y"),
+                    "monto": float(p.monto),
+                    "metodo": p.metodo_pago
+                }
+                for p in pagos_periodo
+            ]
+        
         reporte.append(reporte_dict)
 
     # Calcular porcentaje de ganancia total
@@ -246,7 +271,7 @@ def corte_semanal(request):
     """
     API JSON.
     modo=contable -> fecha_facturacion (todas)
-    modo=flujo    -> fecha_pago (solo pagadas)
+    modo=flujo    -> fecha_pago (incluye pagos parciales)
     """
     modo = (request.GET.get("modo") or "contable").strip().lower()
     if modo not in ("contable", "flujo"):
@@ -255,10 +280,38 @@ def corte_semanal(request):
     # Tu template manda start_date/end_date (o fecha_inicio/fecha_fin)
     fi, ff = _rangos(request)
     if not (fi and ff):
-        return JsonResponse({"error": "Rango de fechas inválido"}, status=400)
+        # Retornar datos vacíos en lugar de error al cargar la página inicial
+        return JsonResponse({
+            "modo": modo,
+            "reporte": [],
+            "totales": {
+                "total_venta": 0,
+                "total_costo_proveedores": 0,
+                "total_transporte": 0,
+                "total_ganancia": 0,
+                "porcentaje_ganancia": 0,
+                "productos_personalizados": "Ninguno",
+                "productos_no_personalizados": "Ninguno",
+            },
+        })
 
     if modo == "flujo":
-        qs = Factura.objects.filter(pagado=True, fecha_pago__range=(fi, ff))
+        # Combinar ambos sistemas:
+        # 1. Facturas con pagos parciales (modelo PagoFactura)
+        facturas_con_pagos_parciales = PagoFactura.objects.filter(
+            fecha_pago__range=(fi, ff)
+        ).values_list('factura_id', flat=True).distinct()
+        
+        # 2. Facturas con pago único (campo fecha_pago)
+        facturas_con_pago_unico = Factura.objects.filter(
+            fecha_pago__range=(fi, ff)
+        ).values_list('id', flat=True)
+        
+        # Unir ambos conjuntos
+        from django.db.models import Q
+        qs = Factura.objects.filter(
+            Q(id__in=facturas_con_pagos_parciales) | Q(id__in=facturas_con_pago_unico)
+        ).distinct()
     else:
         qs = Factura.objects.filter(fecha_facturacion__range=(fi, ff))
 
@@ -283,17 +336,44 @@ def corte_semanal(request):
             bucket = pers if getattr(d.producto, "es_personalizado", False) else no_pers
             bucket[nombre] = bucket.get(nombre, 0) + (d.cantidad or 0)
 
-        fecha_txt = (f.fecha_pago if modo == "flujo" else f.fecha_facturacion).strftime("%d-%b-%Y")
+        # Inicializar variables
+        pagos_periodo_list = None
+        proporcion = 1
+        
+        # Obtener fecha y monto correcto en modo flujo
+        if modo == "flujo":
+            # Obtener todos los pagos en el periodo para esta factura
+            pagos_periodo_list = PagoFactura.objects.filter(
+                factura=f,
+                fecha_pago__range=(fi, ff)
+            ).order_by('fecha_pago')
+            
+            if pagos_periodo_list.exists():
+                # Usar fecha del primer pago y sumar montos del periodo
+                fecha_txt = pagos_periodo_list.first().fecha_pago.strftime("%d-%b-%Y")
+                total_pagado_periodo = sum(p.monto for p in pagos_periodo_list)
+                proporcion = total_pagado_periodo / f.total if f.total > 0 else 0
+            else:
+                # Factura con pago único (sistema antiguo)
+                fecha_txt = f.fecha_pago.strftime("%d-%b-%Y") if f.fecha_pago else f.fecha_facturacion.strftime("%d-%b-%Y")
+                total_pagado_periodo = f.total  # Total completo
+        else:
+            fecha_txt = f.fecha_facturacion.strftime("%d-%b-%Y")
+            total_pagado_periodo = f.total
+
+        # Ajustar ganancia y costos proporcionalmente
+        ganancia_proporcional = ganancia * proporcion
+        porcentaje_ganancia_ajustado = (ganancia_proporcional / total_pagado_periodo * 100) if total_pagado_periodo > 0 else 0
 
         reporte.append({
             "folio": f.folio_factura,
             "cliente": str(f.cliente),
             "fecha": fecha_txt,
-            "total_venta": float(f.total or 0),
-            "costo_proveedores": float(costo),
-            "transporte": float(transporte),
-            "ganancia": float(ganancia),
-            "porcentaje_ganancia": float(porcentaje_ganancia),
+            "total_venta": float(total_pagado_periodo or 0),
+            "costo_proveedores": float(costo * proporcion),
+            "transporte": float(transporte * proporcion),
+            "ganancia": float(ganancia_proporcional),
+            "porcentaje_ganancia": float(porcentaje_ganancia_ajustado),
             "productos_personalizados": pers or "Ninguno",
             "productos_no_personalizados": no_pers or "Ninguno",
         })

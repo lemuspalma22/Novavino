@@ -6,7 +6,7 @@ from extractors.utils_extractores import extraer_total
 
 MONEY_RE = re.compile(r"\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2})|[0-9]+(?:\.[0-9]{2}))")
 SKU_LIKE_RE = re.compile(r"^[A-Z0-9\-]{2,12}$")
-UNIT_RE = re.compile(r"^[A-Z0-9]{1,}(?:\s*-\s*[A-Z0-9]{1,})?$")  # p.ej. "H87 - BOT", "PZA"
+UNIT_RE = re.compile(r"^[A-Za-z0-9]{1,}(?:\s*-\s*[A-Za-z0-9]{1,})?$", re.IGNORECASE)  # p.ej. "H87 - Bot", "PZA"
 
 def _to_decimal(s: str) -> Decimal | None:
     try:

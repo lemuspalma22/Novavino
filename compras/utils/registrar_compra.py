@@ -97,11 +97,24 @@ def registrar_compra_automatizada(datos_extraidos: dict) -> Compra:
 
             # Suma a stock (tu modelo Producto tiene campo 'stock' entero)
             try:
+                import logging
+                logger = logging.getLogger(__name__)
+                
                 inc = int(cantidad) if cantidad is not None else 0
-                producto.stock = (producto.stock or 0) + inc
+                stock_antes = producto.stock or 0
+                producto.stock = stock_antes + inc
+                
+                logger.warning(
+                    f"[registrar_compra] SUMANDO STOCK: {producto.nombre} "
+                    f"antes={stock_antes} incremento={inc} despues={producto.stock}"
+                )
+                
                 producto.save(update_fields=["stock"])
-            except Exception:
+            except Exception as e:
                 # No detengas la compra si algo falla al sumar stock
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"[registrar_compra] Error sumando stock: {e}")
                 pass
 
         else:

@@ -33,6 +33,9 @@
 <table id="tabla-reporte" border="1">
   <thead>
     <tr>
+      <th>
+        <input type="checkbox" id="toggle-all" checked title="Seleccionar/Deseleccionar todo">
+      </th>
       <th>Folio Factura</th>
       <th>Cliente</th>
       <th>Fecha</th>
@@ -48,6 +51,7 @@
   <tbody></tbody>
   <tfoot>
     <tr>
+      <th></th>
       <th colspan="3">Total</th>
       <th id="total-venta">0</th>
       <th id="total-costo">0</th>
@@ -92,7 +96,14 @@
 
         (data.reporte || []).forEach(f => {
           const row = `
-            <tr>
+            <tr class="factura-row"
+                data-total-venta="${toNum(f.total_venta)}"
+                data-costo="${toNum(f.costo_proveedores)}"
+                data-transporte="${toNum(f.transporte)}"
+                data-ganancia="${toNum(f.ganancia)}">
+              <td style="text-align: center;">
+                <input type="checkbox" class="factura-checkbox" checked>
+              </td>
               <td>${f.folio}</td>
               <td>${f.cliente}</td>
               <td>${f.fecha}</td>
@@ -106,6 +117,9 @@
             </tr>`;
           tbody.insertAdjacentHTML("beforeend", row);
         });
+        
+        // Agregar event listeners a los checkboxes
+        attachCheckboxListeners();
 
         const tot = data.totales || {};
         document.getElementById("total-venta").innerText = toNum(tot.total_venta).toFixed(2);
@@ -136,5 +150,62 @@
   }
   document.getElementById("form-export-csv").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
   document.getElementById("form-export-pdf").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
+
+  // ====================
+  // FUNCIONALIDAD DE CHECKBOXES
+  // ====================
+  
+  function recalcularTotales() {
+    let totalVenta = 0;
+    let totalCosto = 0;
+    let totalTransporte = 0;
+    let totalGanancia = 0;
+
+    // Iterar sobre todas las filas
+    document.querySelectorAll('.factura-row').forEach(row => {
+      const checkbox = row.querySelector('.factura-checkbox');
+      
+      if (checkbox && checkbox.checked) {
+        // Sumar valores de esta fila
+        totalVenta += parseFloat(row.dataset.totalVenta) || 0;
+        totalCosto += parseFloat(row.dataset.costo) || 0;
+        totalTransporte += parseFloat(row.dataset.transporte) || 0;
+        totalGanancia += parseFloat(row.dataset.ganancia) || 0;
+      }
+    });
+
+    // Calcular porcentaje de ganancia
+    const porcentajeGanancia = totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0;
+
+    // Actualizar totales en la tabla
+    document.getElementById('total-venta').textContent = totalVenta.toFixed(2);
+    document.getElementById('total-costo').textContent = totalCosto.toFixed(2);
+    document.getElementById('total-transporte').textContent = totalTransporte.toFixed(2);
+    document.getElementById('total-ganancia').textContent = totalGanancia.toFixed(2);
+    document.getElementById('total-porcentaje-ganancia').textContent = porcentajeGanancia.toFixed(2) + '%';
+  }
+
+  function attachCheckboxListeners() {
+    // Escuchar cambios en checkboxes individuales
+    document.querySelectorAll('.factura-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        // Actualizar estado del toggle-all
+        const allCheckboxes = document.querySelectorAll('.factura-checkbox');
+        const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+        document.getElementById('toggle-all').checked = allChecked;
+        
+        recalcularTotales();
+      });
+    });
+  }
+
+  // Toggle todas las facturas
+  document.getElementById('toggle-all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.factura-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = this.checked;
+    });
+    recalcularTotales();
+  });
 </script>
 {% endblock %}

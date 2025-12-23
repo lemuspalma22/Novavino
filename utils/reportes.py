@@ -65,12 +65,21 @@ def calcular_agregados_periodo_ventas(queryset: QuerySet, fecha_inicio=None, fec
         Dict con totales, productos personalizados/no personalizados
     """
     # Aplicar filtros
-    if solo_pagadas:
+    # MODO FLUJO: Considerar pagos parciales en el periodo
+    if campo_fecha == 'fecha_pago' and fecha_inicio and fecha_fin:
+        # Buscar facturas que tengan al menos un pago en el periodo
+        from ventas.models import PagoFactura
+        facturas_con_pagos_periodo = PagoFactura.objects.filter(
+            fecha_pago__range=(fecha_inicio, fecha_fin)
+        ).values_list('factura_id', flat=True).distinct()
+        
+        queryset = queryset.filter(id__in=facturas_con_pagos_periodo)
+    elif solo_pagadas:
+        # MODO CONTABLE: Filtrar solo facturas completamente pagadas
         queryset = queryset.filter(pagado=True)
     
-    if fecha_inicio and fecha_fin:
-        filtro_fecha = f"{campo_fecha}__range"
-        queryset = queryset.filter(**{filtro_fecha: (fecha_inicio, fecha_fin)})
+    if fecha_inicio and fecha_fin and campo_fecha == 'fecha_facturacion':
+        queryset = queryset.filter(fecha_facturacion__range=(fecha_inicio, fecha_fin))
     
     # Calcular totales usando agregación simple (sin JOINs para evitar duplicación)
     agregados = queryset.aggregate(

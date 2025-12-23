@@ -2,10 +2,12 @@ from django.contrib import admin, messages
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
-from django.urls import path
+from django.urls import path, reverse
 from django import forms
 from django.utils.html import format_html, format_html_join
-from .models import Producto, AliasProducto, ProductoNoReconocido
+from .models import Producto, AliasProducto, ProductoNoReconocido, LogFusionProductos
+from .fusion import fusionar_productos_suave, fusionar_multiples_productos, deshacer_fusion, validar_fusion
+import json
 
 
 # ------------------------------
@@ -26,73 +28,200 @@ class ProductoAdminForm(forms.ModelForm):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display  = ("nombre", "proveedor", "precio_venta", "stock", "es_personalizado")
-    list_filter   = ("proveedor", "es_personalizado")
+    list_display  = ("nombre", "proveedor", "precio_venta", "stock", "estado_fusion_display", "es_personalizado")
+    list_filter   = ("activo", "proveedor", "es_personalizado")
     search_fields = ("nombre", "proveedor__nombre")
     change_list_template = "producto_changelist.html"
-    actions = ["fusionar_productos"]
+    actions = ["fusionar_productos_accion", "deshacer_fusion_accion"]
     form = ProductoAdminForm
-    ordering = ["nombre"]  # Ordenar alfabéticamente por defecto
+    # ordering ya está definido en Meta del modelo como ['-activo', 'nombre']
 
-    @admin.action(description="Fusionar productos seleccionados (sumar stock y mover alias al primero)")
-    @transaction.atomic
-    def fusionar_productos(self, request, queryset):
+    def estado_fusion_display(self, obj):
+        """Muestra el estado de fusión del producto."""
+        if not obj.activo:
+            if obj.fusionado_en:
+                return format_html(
+                    '<span style="color: #e74c3c;">→ Fusionado en <a href="{}">{}</a></span>',
+                    reverse('admin:inventario_producto_change', args=[obj.fusionado_en.id]),
+                    obj.fusionado_en.nombre
+                )
+            return format_html('<span style="color: #999;">Inactivo</span>')
+        
+        count = obj.count_fusionados()
+        if count > 0:
+            return format_html(
+                '<span style="color: #27ae60;">Activo ({} fusionado{})</span>',
+                count,
+                's' if count > 1 else ''
+            )
+        return format_html('<span style="color: #27ae60;">Activo</span>')
+    estado_fusion_display.short_description = "Estado"
+    
+    @admin.action(description="Fusionar productos seleccionados (Fusión Suave)")
+    def fusionar_productos_accion(self, request, queryset):
+        """
+        Nueva acción de fusión usando el sistema de Fusión Suave.
+        No elimina productos, solo los marca como fusionados.
+        """
         count = queryset.count()
         if count < 2:
-            self.message_user(request, "Selecciona al menos 2 productos para fusionar.", level=messages.WARNING)
+            self.message_user(
+                request,
+                "Selecciona al menos 2 productos para fusionar.",
+                level=messages.WARNING
+            )
             return
-
-        maestro = queryset.order_by("id").first()
-        originales = list(queryset.exclude(pk=maestro.pk))
-
-        stock_sumado = maestro.stock or 0
-        conflictos_alias = 0
-        creados_alias_nombre = 0
-        movidos_alias = 0
-
-        for dup in originales:
-            # 1) mover alias del duplicado al maestro
-            for alias in AliasProducto.objects.filter(producto=dup):
-                texto = (alias.alias or "").strip()
-                ya = AliasProducto.objects.filter(alias__iexact=texto, producto=maestro).exists()
-                if not ya:
-                    alias.producto = maestro
-                    alias.save(update_fields=["producto"])
-                    movidos_alias += 1
-                else:
-                    conflictos_alias += 1
-
-            # 2) crear alias con el NOMBRE del duplicado apuntando al maestro (si no existe)
-            nombre_dup = (dup.nombre or "").strip()
-            if nombre_dup and not AliasProducto.objects.filter(alias__iexact=nombre_dup, producto=maestro).exists():
-                try:
-                    AliasProducto.objects.create(alias=nombre_dup, producto=maestro)
-                    creados_alias_nombre += 1
-                except Exception:
-                    conflictos_alias += 1
-
-            # 3) sumar stock
-            stock_sumado += (dup.stock or 0)
-
-            # 4) eliminar el duplicado
-            dup.delete()
-
-        # 5) guardar stock total en el maestro
-        maestro.stock = stock_sumado
-        maestro.save(update_fields=["stock"])
-
-        self.message_user(
-            request,
-            (
-                f"Fusión completada. Maestro: '{maestro.nombre}'. "
-                f"Fusionados: {len(originales)}. "
-                f"Stock total: {stock_sumado}. "
-                f"Alias movidos: {movidos_alias}. "
-                f"Alias creados desde nombre: {creados_alias_nombre}. "
-                f"Conflictos de alias (omitidos): {conflictos_alias}."
-            ),
-            level=messages.SUCCESS,
+        
+        # Redirigir a vista de confirmación
+        ids = ','.join(str(p.id) for p in queryset)
+        return HttpResponseRedirect(
+            reverse('admin:inventario_fusionar_confirmar') + f'?ids={ids}'
         )
+    
+    @admin.action(description="Deshacer fusión (reactivar productos)")
+    def deshacer_fusion_accion(self, request, queryset):
+        """
+        Deshace la fusión de productos seleccionados, reactivándolos.
+        Solo funciona con productos inactivos que fueron fusionados.
+        """
+        # Filtrar solo productos fusionados
+        productos_fusionados = queryset.filter(activo=False, fusionado_en__isnull=False)
+        
+        if not productos_fusionados.exists():
+            self.message_user(
+                request,
+                "Ninguno de los productos seleccionados está fusionado.",
+                level=messages.WARNING
+            )
+            return
+        
+        # Deshacer cada fusión
+        exitosos = 0
+        errores = []
+        
+        for producto in productos_fusionados:
+            resultado = deshacer_fusion(
+                producto_fusionado=producto,
+                restaurar_stock=True,
+                usuario=request.user
+            )
+            
+            if resultado['success']:
+                exitosos += 1
+            else:
+                errores.append(f"{producto.nombre}: {resultado.get('error', 'Error desconocido')}")
+        
+        # Mensajes
+        if exitosos > 0:
+            self.message_user(
+                request,
+                f"Se deshicieron {exitosos} fusión(es) exitosamente.",
+                level=messages.SUCCESS
+            )
+        
+        if errores:
+            for error in errores:
+                self.message_user(request, error, level=messages.ERROR)
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'fusionar-confirmar/',
+                self.admin_site.admin_view(self.fusionar_confirmar_view),
+                name='inventario_fusionar_confirmar'
+            ),
+        ]
+        return custom_urls + urls
+    
+    def fusionar_confirmar_view(self, request):
+        """Vista de confirmación para fusión de productos."""
+        ids_raw = request.GET.get('ids', '')
+        ids = [int(x) for x in ids_raw.split(',') if x.isdigit()]
+        productos = Producto.objects.filter(id__in=ids).order_by('nombre')
+        
+        if productos.count() < 2:
+            messages.error(request, "Selecciona al menos 2 productos para fusionar.")
+            return redirect('admin:inventario_producto_changelist')
+        
+        if request.method == 'POST':
+            principal_id = request.POST.get('principal_id')
+            razon = request.POST.get('razon', 'Productos duplicados')
+            
+            if not principal_id:
+                messages.error(request, "Debes seleccionar el producto principal.")
+                return redirect(request.path + f'?ids={ids_raw}')
+            
+            try:
+                principal = Producto.objects.get(id=principal_id)
+                secundarios = productos.exclude(id=principal_id)
+                
+                # Ejecutar fusión múltiple
+                resultado = fusionar_multiples_productos(
+                    principal,
+                    secundarios,
+                    request.user,
+                    razon=razon
+                )
+                
+                if resultado['success']:
+                    messages.success(
+                        request,
+                        f"✓ Fusión completada: {resultado['fusionados']} producto(s) fusionado(s) en '{principal.nombre}'. "
+                        f"Stock transferido: {resultado['stock_total_transferido']}"
+                    )
+                    
+                    # Mostrar advertencias si las hay
+                    for advertencia in resultado.get('advertencias', []):
+                        messages.warning(request, advertencia)
+                else:
+                    for error in resultado.get('errores', []):
+                        messages.error(request, error)
+                
+                return redirect('admin:inventario_producto_changelist')
+                
+            except Exception as e:
+                messages.error(request, f"Error al fusionar: {str(e)}")
+                return redirect('admin:inventario_producto_changelist')
+        
+        # GET: Mostrar formulario
+        # Calcular vista previa
+        stock_total = sum(p.stock or 0 for p in productos)
+        
+        # Validar cada combinación posible
+        validaciones = {}
+        for principal in productos:
+            errores_total = []
+            advertencias_total = []
+            for secundario in productos:
+                if principal.id != secundario.id:
+                    es_valido, errores, advertencias = validar_fusion(principal, secundario)
+                    errores_total.extend(errores)
+                    advertencias_total.extend(advertencias)
+            
+            validaciones[principal.id] = {
+                'es_valido': len(errores_total) == 0,
+                'errores': list(set(errores_total)),
+                'advertencias': list(set(advertencias_total))
+            }
+        
+        # Preparar contexto base del admin
+        admin_context = {}
+        if self.admin_site:
+            admin_context = self.admin_site.each_context(request)
+        
+        context = {
+            **admin_context,
+            'title': 'Confirmar Fusión de Productos',
+            'productos': productos,
+            'stock_total': stock_total,
+            'validaciones': validaciones,
+            'validaciones_json': json.dumps(validaciones),
+            'ids': ids_raw,
+            'opts': self.model._meta,
+        }
+        
+        return render(request, 'admin/inventario/fusionar_confirmar.html', context)
 
 
 # ------------------------------
@@ -124,7 +253,6 @@ class ConciliarForm(forms.Form):
         required=True,
     )
     crear_alias = forms.BooleanField(initial=True, required=False, label="Crear alias con el nombre detectado")
-    ejecutar_procesar = forms.BooleanField(initial=True, required=False, label="Ejecutar procesar_a_stock()")
 
 
 # Form para ajustar etiquetas en el admin de ProductoNoReconocido
@@ -269,7 +397,6 @@ class ProductoNoReconocidoAdmin(admin.ModelAdmin):
             if form.is_valid():
                 destino = form.cleaned_data["producto_destino"]
                 crear_alias = form.cleaned_data.get("crear_alias", True)
-                ejecutar = form.cleaned_data.get("ejecutar_procesar", True)
                 procesados = 0
                 creados_alias = 0
                 with transaction.atomic():
@@ -285,11 +412,8 @@ class ProductoNoReconocidoAdmin(admin.ModelAdmin):
                                 creados_alias += 1
                             except Exception:
                                 pass
-                        if ejecutar:
-                            try:
-                                obj.procesar_a_stock()
-                            except Exception:
-                                pass
+                        # NOTA: No llamar obj.procesar_a_stock() aquí
+                        # El signal post_save ya lo hace automáticamente cuando procesado=True
                         procesados += 1
                 self.message_user(request, f"Conciliados: {procesados}. Alias creados: {creados_alias}.", level=messages.SUCCESS)
                 return redirect("../")
@@ -383,3 +507,80 @@ class ProductoNoReconocidoAdmin(admin.ModelAdmin):
             self.message_user(request, f"{updated} elemento(s) prellenados desde snapshot.", level=messages.SUCCESS)
         else:
             self.message_user(request, "No había líneas detectadas o ya estaban prellenados.", level=messages.INFO)
+
+
+# ------------------------------
+# Log de Fusión de Productos
+# ------------------------------
+@admin.register(LogFusionProductos)
+class LogFusionProductosAdmin(admin.ModelAdmin):
+    list_display = (
+        'fecha_fusion',
+        'producto_principal_display',
+        'producto_secundario_nombre',
+        'stock_transferido',
+        'usuario',
+        'revertida'
+    )
+    list_filter = ('revertida', 'fecha_fusion')
+    search_fields = (
+        'producto_principal__nombre',
+        'producto_principal_nombre',
+        'producto_secundario_nombre',
+        'razon'
+    )
+    
+    def producto_principal_display(self, obj):
+        """Muestra el producto principal o su nombre si fue eliminado."""
+        if obj.producto_principal:
+            return format_html(
+                '<a href="{}">{}</a>',
+                reverse('admin:inventario_producto_change', args=[obj.producto_principal.id]),
+                obj.producto_principal.nombre
+            )
+        return format_html(
+            '<span style="color: #999;">{} (eliminado)</span>',
+            obj.producto_principal_nombre
+        )
+    producto_principal_display.short_description = "Producto Principal"
+    readonly_fields = (
+        'producto_principal',
+        'producto_secundario_id',
+        'producto_secundario_nombre',
+        'stock_transferido',
+        'fecha_fusion',
+        'usuario',
+        'fecha_reversion'
+    )
+    
+    fieldsets = (
+        ('Información de Fusión', {
+            'fields': (
+                'producto_principal',
+                'producto_secundario_id',
+                'producto_secundario_nombre',
+                'stock_transferido',
+                'fecha_fusion',
+                'usuario',
+            )
+        }),
+        ('Razón', {
+            'fields': ('razon',)
+        }),
+        ('Reversión', {
+            'fields': ('revertida', 'fecha_reversion'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        # No permitir crear logs manualmente
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # No permitir eliminar logs
+        return False
+    
+    def has_module_permission(self, request):
+        # Ocultar del menú lateral, pero mantener accesible por URL
+        return False

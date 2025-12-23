@@ -1,0 +1,79 @@
+{% extends 'reportes/base.html' %}
+
+{% block title %}Dashboard Principal{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-label">💰 Por Cobrar (Clientes)</div>
+        <div class="stat-value">${{ total_por_cobrar|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_facturas_pendientes }} facturas pendientes</div>
+    </div>
+    
+    <div class="stat-card red">
+        <div class="stat-label">🏦 Por Pagar (Proveedores)</div>
+        <div class="stat-value">${{ total_por_pagar|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_compras_pendientes }} compras pendientes</div>
+    </div>
+    
+    <div class="stat-card {% if flujo_neto >= 0 %}blue{% else %}orange{% endif %}">
+        <div class="stat-label">📊 Flujo Neto Proyectado</div>
+        <div class="stat-value">${{ flujo_neto|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{% if flujo_neto >= 0 %}Positivo ✅{% else %}Negativo ⚠️{% endif %}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📋 Resumen Ejecutivo</h2>
+    <div style="margin-top: 20px;">
+        <table>
+            <tr>
+                <th>Concepto</th>
+                <th style="text-align: right;">Monto</th>
+                <th>Estado</th>
+            </tr>
+            <tr>
+                <td><strong>Entradas Proyectadas</strong> (dinero por cobrar)</td>
+                <td style="text-align: right;" class="text-success">${{ total_por_cobrar|floatformat:2 }}</td>
+                <td><span class="badge badge-success">{{ num_facturas_pendientes }} facturas</span></td>
+            </tr>
+            <tr>
+                <td><strong>Salidas Proyectadas</strong> (dinero por pagar)</td>
+                <td style="text-align: right;" class="text-danger">${{ total_por_pagar|floatformat:2 }}</td>
+                <td><span class="badge badge-danger">{{ num_compras_pendientes }} compras</span></td>
+            </tr>
+            <tr style="background: #f8f9fa; font-weight: bold;">
+                <td>FLUJO NETO</td>
+                <td style="text-align: right;">
+                    {% if flujo_neto >= 0 %}
+                        <span class="text-success">${{ flujo_neto|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="text-danger">${{ flujo_neto|floatformat:2 }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if flujo_neto >= 0 %}
+                        <span class="badge badge-success">Positivo</span>
+                    {% else %}
+                        <span class="badge badge-warning">Negativo</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🔍 Accesos Rápidos</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+        <a href="{% url 'reportes:cuentas_por_cobrar' %}" class="btn">Ver Cuentas por Cobrar →</a>
+        <a href="{% url 'reportes:cuentas_por_pagar' %}" class="btn">Ver Cuentas por Pagar →</a>
+        <a href="{% url 'reportes:flujo_caja' %}" class="btn">Ver Flujo de Caja →</a>
+        <a href="{% url 'reportes:distribucion_fondos' %}" class="btn">Ver Distribución de Fondos →</a>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ Información:</strong> Todos los montos son calculados en tiempo real basándose en los pagos parciales registrados en el sistema.
+</div>
+{% endblock %}

@@ -1,10 +1,10 @@
 # ventas/signals.py
 from decimal import Decimal
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.db.models import F, Sum, DecimalField, ExpressionWrapper
 
-from ventas.models import DetalleFactura
+from ventas.models import DetalleFactura, Factura
 from inventario.models import Producto
 
 def _recalc_factura_total(factura):
@@ -54,3 +54,29 @@ def _on_detalle_delete(sender, instance, **kwargs):
 
     # Recalcular total
     _recalc_factura_total(instance.factura)
+
+
+@receiver(pre_delete, sender=Factura)
+def borrar_pnr_asociados_al_borrar_factura(sender, instance, **kwargs):
+    """
+    Al borrar una Factura, elimina los ProductoNoReconocido asociados por UUID.
+    Esto evita que queden PNR huérfanos que bloqueen el reprocesamiento.
+    Similar al signal en compras/signals.py para Compra.
+    """
+    try:
+        from inventario.models import ProductoNoReconocido
+        
+        uuid = instance.uuid_factura
+        if uuid:
+            # Borrar todos los PNR con el mismo UUID de factura
+            pnr_asociados = ProductoNoReconocido.objects.filter(
+                uuid_factura=uuid,
+                origen="venta"
+            )
+            count = pnr_asociados.count()
+            if count > 0:
+                pnr_asociados.delete()
+                print(f"Borrados {count} ProductoNoReconocido asociados a Factura {instance.folio_factura} (UUID: {uuid})")
+    except Exception as e:
+        # Log error pero no bloquear el borrado
+        print(f"Error al borrar PNR asociados a Factura {instance.id}: {e}")

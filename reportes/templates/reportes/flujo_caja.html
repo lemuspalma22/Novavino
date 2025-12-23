@@ -1,0 +1,175 @@
+{% extends 'reportes/base.html' %}
+
+{% block title %}Flujo de Caja{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-label">📈 Entradas Proyectadas</div>
+        <div class="stat-value">${{ entradas_proyectadas|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_facturas_cobrar }} facturas por cobrar</div>
+    </div>
+    
+    <div class="stat-card red">
+        <div class="stat-label">📉 Salidas Proyectadas</div>
+        <div class="stat-value">${{ salidas_proyectadas|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_compras_pagar }} compras por pagar</div>
+    </div>
+    
+    <div class="stat-card {% if flujo_neto >= 0 %}blue{% else %}orange{% endif %}">
+        <div class="stat-label">💵 Flujo Neto</div>
+        <div class="stat-value">${{ flujo_neto|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">
+            {% if flujo_neto >= 0 %}
+                Positivo ✅
+            {% else %}
+                Negativo ⚠️
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if flujo_neto < 0 %}
+<div class="alert alert-warning">
+    <strong>⚠️ Alerta:</strong> El flujo neto proyectado es negativo. Las salidas superan a las entradas.
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>📊 Flujo de Caja Proyectado (Próximas Semanas)</h2>
+    <div style="margin-top: 20px;">
+        <canvas id="flujoCajaChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📋 Desglose de Flujo</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Período</th>
+                <th style="text-align: right;">Entradas</th>
+                <th style="text-align: right;">Salidas</th>
+                <th style="text-align: right;">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for semana in semanas %}
+            <tr>
+                <td><strong>{{ semana.label }}</strong></td>
+                <td style="text-align: right;" class="text-success">${{ semana.entradas|floatformat:2 }}</td>
+                <td style="text-align: right;" class="text-danger">${{ semana.salidas|floatformat:2 }}</td>
+                <td style="text-align: right;">
+                    {% with balance=semana.entradas|add:semana.salidas|floatformat:2 %}
+                        {% if balance|cut:"-"|cut:"$" > "0" %}
+                            <span class="text-success">${{ balance }}</span>
+                        {% else %}
+                            <span class="text-danger">${{ balance }}</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background: #f8f9fa; font-weight: bold;">
+                <td>TOTAL</td>
+                <td style="text-align: right;" class="text-success">${{ entradas_proyectadas|floatformat:2 }}</td>
+                <td style="text-align: right;" class="text-danger">${{ salidas_proyectadas|floatformat:2 }}</td>
+                <td style="text-align: right;">
+                    {% if flujo_neto >= 0 %}
+                        <span class="text-success">${{ flujo_neto|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="text-danger">${{ flujo_neto|floatformat:2 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ Información:</strong> El flujo de caja proyectado se basa en las fechas de vencimiento de facturas y compras pendientes. Los valores son estimaciones y pueden variar según los pagos reales recibidos y realizados.
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'reportes:dashboard' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('flujoCajaChart').getContext('2d');
+    
+    const labels = [{% for semana in semanas %}'{{ semana.label }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const entradas = [{% for semana in semanas %}{{ semana.entradas|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const salidas = [{% for semana in semanas %}{{ semana.salidas|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Entradas (Por Cobrar)',
+                    data: entradas,
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Salidas (Por Pagar)',
+                    data: salidas,
+                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Flujo de Caja Proyectado',
+                    font: {
+                        size: 18
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '$' + context.parsed.y.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

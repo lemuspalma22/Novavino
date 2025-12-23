@@ -9,8 +9,9 @@ def home(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
-    path('compras/', include('compras.urls')),  # Agrega esta línea
+    path('compras/', include('compras.urls')),
     path('inventario/', include('inventario.urls')),
     path("ventas/", include("ventas.urls")),
+    path('reportes/', include('reportes.urls')),  # Fase 3: Dashboards
 
 ]

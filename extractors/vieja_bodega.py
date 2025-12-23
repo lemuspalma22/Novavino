@@ -25,8 +25,20 @@ class ExtractorViejaBodega:
 
     _TAX_RATES = {Decimal("16.00"), Decimal("26.50")}  # tasas a ignorar en qty/tokens
 
-    def __init__(self, pdf_path: str):
-        self.pdf_path = pdf_path
+    def __init__(self, text: str = None, pdf_path: str = None):
+        """
+        Inicializa el extractor.
+        Args:
+            text: Texto extraído del PDF (no se usa, se mantiene por compatibilidad)
+            pdf_path: Ruta al archivo PDF
+        """
+        # Soportar ambas firmas: (pdf_path) y (text, pdf_path)
+        if text is not None and pdf_path is None:
+            # Llamada antigua: ExtractorViejaBodega(pdf_path)
+            self.pdf_path = text
+        else:
+            # Llamada nueva: ExtractorViejaBodega(text, pdf_path)
+            self.pdf_path = pdf_path
 
     def _find_header(self, lines, regexes, start=0):
         for i in range(start, len(lines)):
@@ -263,11 +275,14 @@ class ExtractorViejaBodega:
                     if i not in seen: imp_cands.append((i, v, hasc))
 
             best = None
+            # Buscar en ventana de P/U
             for i in range(pu_ptr, min(pu_ptr + 8, len(pu_cands))):
                 _, pu_v = pu_cands[i]
                 if pu_v >= Decimal("5000"): 
                     continue
-                for j in range(imp_ptr, min(imp_ptr + 12, len(imp_cands))):
+                # Buscar en TODA la lista de importes (no solo desde imp_ptr)
+                # porque imp_cands cambia con los candidatos extras
+                for j in range(len(imp_cands)):
                     _, imp_v, _ = imp_cands[j]
                     rel = abs((pu_v * q) - imp_v) / (imp_v if imp_v else Decimal("1"))
                     if rel <= Decimal("0.05"):
@@ -277,7 +292,10 @@ class ExtractorViejaBodega:
             if best:
                 _, i, j, pu_v, imp_v = best
                 pu_vals.append(pu_v); imp_vals.append(imp_v)
-                pu_ptr = i + 1; imp_ptr = j + 1
+                pu_ptr = i + 1
+                # Solo actualizar imp_ptr si el match está en los candidatos originales
+                if j < len(imp_cands0):
+                    imp_ptr = j + 1
             else:
                 if imp_ptr < len(imp_cands):
                     imp_v = imp_cands[imp_ptr][1]

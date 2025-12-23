@@ -74,9 +74,12 @@ def asignar_pnr_view(request, object_id):
         print("✓ Transacción atómica completada exitosamente\n")
         
         # Marcar PNR como procesado FUERA de la transacción para evitar rollback
+        # IMPORTANTE: Marcamos movimiento_generado=True para que el signal NO procese
+        # Ya sumamos stock y creamos CompraProducto arriba
         pnr.procesado = True
         pnr.producto = producto
-        pnr.save(update_fields=["procesado", "producto"])
+        pnr.movimiento_generado = True  # Evita que el signal duplique
+        pnr.save(update_fields=["procesado", "producto", "movimiento_generado"])
         print(f"✓ PNR {pnr_id} marcado como procesado (fuera de transacción)")
         
         # Verificar que el PNR realmente se marcó como procesado
@@ -155,19 +158,25 @@ def crear_producto_pnr_view(request, object_id):
         # Primero marcamos el PNR como procesado
         pnr.procesado = True
         pnr.producto = producto
-        pnr.save(update_fields=["procesado", "producto"])
+        pnr.movimiento_generado = True  # Evita que el signal duplique
+        pnr.save(update_fields=["procesado", "producto", "movimiento_generado"])
         
-        # Luego intentamos crear el alias
+        # Luego intentamos crear el alias SOLO si el nombre detectado es diferente al nombre del producto
         if pnr.nombre_detectado and producto:
-            try:
-                AliasProducto.objects.get_or_create(
-                    alias=pnr.nombre_detectado,
-                    defaults={"producto": producto}
-                )
-                messages.success(request, f"✓ Producto '{producto.nombre}' creado, asignado y alias creado.")
-            except Exception as e:
-                logger.error(f"Error creando alias para nuevo producto: {str(e)}", exc_info=True)
-                messages.warning(request, f"✓ Producto '{producto.nombre}' creado pero NO se pudo crear alias: {str(e)}")
+            # Evitar crear alias con el mismo nombre que el producto (redundante)
+            if pnr.nombre_detectado.strip().lower() != producto.nombre.strip().lower():
+                try:
+                    AliasProducto.objects.get_or_create(
+                        alias=pnr.nombre_detectado,
+                        defaults={"producto": producto}
+                    )
+                    messages.success(request, f"✓ Producto '{producto.nombre}' creado, asignado y alias creado.")
+                except Exception as e:
+                    logger.error(f"Error creando alias para nuevo producto: {str(e)}", exc_info=True)
+                    messages.warning(request, f"✓ Producto '{producto.nombre}' creado pero NO se pudo crear alias: {str(e)}")
+            else:
+                # El nombre detectado es igual al producto, no crear alias
+                messages.success(request, f"✓ Producto '{producto.nombre}' creado y asignado.")
         else:
             if producto:
                 messages.success(request, f"✓ Producto '{producto.nombre}' creado y asignado.")

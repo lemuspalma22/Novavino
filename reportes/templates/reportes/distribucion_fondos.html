@@ -1,0 +1,143 @@
+{% extends 'reportes/base.html' %}
+
+{% block title %}Distribución de Fondos{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🎯 Distribución de Fondos - Vista Avanzada</h2>
+    <p style="color: #6c757d; margin-top: 10px;">
+        Este reporte desglosa el dinero pendiente de cobro en sus componentes: costos (comprometidos para proveedores) y ganancia (utilidad neta).
+    </p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card orange">
+        <div class="stat-label">📦 Costos por Recuperar</div>
+        <div class="stat-value">${{ costos_por_recuperar|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">Dinero comprometido a proveedores</div>
+    </div>
+    
+    <div class="stat-card green">
+        <div class="stat-label">💰 Ganancia por Recibir</div>
+        <div class="stat-value">${{ ganancia_por_recibir|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">Utilidad neta proyectada</div>
+    </div>
+    
+    <div class="stat-card red">
+        <div class="stat-label">🏦 Dinero Comprometido</div>
+        <div class="stat-value">${{ dinero_comprometido|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">Obligaciones con proveedores</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📊 Análisis de Fondos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Concepto</th>
+                <th style="text-align: right;">Monto</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="background: #fff3cd;">
+                <td><strong>💵 Por Cobrar (Total)</strong></td>
+                <td style="text-align: right;"><strong>${{ total_pendiente_cobro|floatformat:2 }}</strong></td>
+                <td><span class="badge badge-warning">Pendiente de cobro a clientes</span></td>
+            </tr>
+            <tr>
+                <td style="padding-left: 30px;">📦 Costos por recuperar</td>
+                <td style="text-align: right;" class="text-danger">${{ costos_por_recuperar|floatformat:2 }}</td>
+                <td><span class="text-muted">Parte que debe ir a proveedores</span></td>
+            </tr>
+            <tr>
+                <td style="padding-left: 30px;">💰 Ganancia por recibir</td>
+                <td style="text-align: right;" class="text-success">${{ ganancia_por_recibir|floatformat:2 }}</td>
+                <td><span class="text-muted">Utilidad neta del negocio</span></td>
+            </tr>
+            <tr style="background: #f8d7da;">
+                <td><strong>🏦 Por Pagar</strong></td>
+                <td style="text-align: right;"><strong>${{ dinero_comprometido|floatformat:2 }}</strong></td>
+                <td><span class="badge badge-danger">Obligaciones pendientes</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>💡 Interpretación</h2>
+    <div style="background: #e9ecef; padding: 20px; border-radius: 6px; margin-top: 15px;">
+        <h3 style="color: #495057; font-size: 16px; margin-bottom: 15px;">¿Qué significa esto?</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>1️⃣ Costos por Recuperar:</strong> 
+            <span class="text-danger">${{ costos_por_recuperar|floatformat:2 }}</span>
+            <p style="margin-top: 5px; color: #6c757d;">
+                De todo el dinero que te deben los clientes, esta parte corresponde a los costos de los productos vendidos. 
+                Este dinero está "comprometido" porque eventualmente lo usarás para pagar a proveedores.
+            </p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>2️⃣ Ganancia por Recibir:</strong> 
+            <span class="text-success">${{ ganancia_por_recibir|floatformat:2 }}</span>
+            <p style="margin-top: 5px; color: #6c757d;">
+                Esta es la ganancia neta que recibirás cuando los clientes paguen sus facturas pendientes. 
+                Este dinero es tu utilidad real y puedes usarlo libremente.
+            </p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>3️⃣ Dinero Comprometido (Por Pagar):</strong> 
+            <span class="text-danger">${{ dinero_comprometido|floatformat:2 }}</span>
+            <p style="margin-top: 5px; color: #6c757d;">
+                Son las compras que ya realizaste pero aún no has pagado a los proveedores. 
+                Este dinero debe estar disponible en caja para liquidar estas obligaciones.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📈 Balance Proyectado</h2>
+    <table>
+        <tr>
+            <td><strong>Si cobras todo lo pendiente:</strong></td>
+            <td style="text-align: right;">
+                <span class="text-success">+${{ total_pendiente_cobro|floatformat:2 }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left: 30px;">Menos: Costos a proveedores</td>
+            <td style="text-align: right;">
+                <span class="text-danger">-${{ costos_por_recuperar|floatformat:2 }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left: 30px;">Menos: Obligaciones pendientes</td>
+            <td style="text-align: right;">
+                <span class="text-danger">-${{ dinero_comprometido|floatformat:2 }}</span>
+            </td>
+        </tr>
+        <tr style="background: #d4edda; font-weight: bold;">
+            <td><strong>Ganancia Neta Proyectada:</strong></td>
+            <td style="text-align: right;">
+                {% if ganancia_neta_proyectada >= 0 %}
+                    <span class="text-success">${{ ganancia_neta_proyectada|floatformat:2 }}</span>
+                {% else %}
+                    <span class="text-danger">${{ ganancia_neta_proyectada|floatformat:2 }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ Fase 1 & 2 en Acción:</strong> Este reporte utiliza la distribución proporcional de costos y ganancias implementada en las Fases 1 y 2. Cada pago parcial se divide automáticamente en su componente de costo y ganancia.
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'reportes:dashboard' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+{% endblock %}

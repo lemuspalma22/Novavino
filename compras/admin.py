@@ -6,7 +6,7 @@ from django.urls import path, reverse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
-from .models import Compra, Proveedor, CompraProducto
+from .models import Compra, Proveedor, CompraProducto, PagoCompra
 from inventario.models import Producto, ProductoNoReconocido
 from .views_pnr import asignar_pnr_view, crear_producto_pnr_view
 
@@ -46,16 +46,28 @@ class CompraProductoAdmin(admin.ModelAdmin):
         return format_html('<span style="color: #27ae60;">✓</span>')
     flag_revision.short_description = "Estado"
 
+
+class PagoCompraInline(admin.TabularInline):
+    """Inline para mostrar y agregar pagos en el detalle de compra."""
+    model = PagoCompra
+    extra = 0
+    fields = ("fecha_pago", "monto", "metodo_pago", "referencia", "notas")
+    
+    class Meta:
+        verbose_name = "Pago"
+        verbose_name_plural = "Pagos"
+
 # Personalización del admin de Compra
 class CompraAdmin(admin.ModelAdmin):
-    list_display = ("folio", "proveedor", "fecha", "total", "estado_detallado", "pagado")
+    list_display = ("folio", "proveedor", "fecha", "total", "total_pagado_display", "saldo_pendiente_display", "estado_pago_display", "pagado", "fecha_pago_display", "estado_detallado")
     list_filter = ("requiere_revision_manual", "estado_revision", "pagado", "proveedor")
     search_fields = ("folio", "uuid", "proveedor__nombre")
-    readonly_fields = ("resumen_revision",)
+    readonly_fields = ("resumen_revision", "info_pagos_display")
     actions = ["marcar_revisado_ok", "marcar_revisado_con_cambios"]
+    inlines = [PagoCompraInline]
     fieldsets = (
         ("Información general", {
-            "fields": ("folio", "proveedor", "fecha", "total", "uuid", "archivo", "pagado", "fecha_pago", "complemento_pago", "notas")
+            "fields": ("folio", "proveedor", "fecha", "total", "uuid", "archivo", "pagado", "fecha_pago", "complemento_pago", "notas", "info_pagos_display")
         }),
         ("Estado de revisión", {
             "fields": ("resumen_revision", "requiere_revision_manual", "estado_revision"),
@@ -81,6 +93,95 @@ class CompraAdmin(admin.ModelAdmin):
         icono = '<span style="color: #27ae60;">✓</span>'
         return format_html(f'{icono} OK')
     estado_detallado.short_description = "Estado revisión"
+    
+    def fecha_pago_display(self, obj):
+        """Muestra la fecha de pago en formato YYYY-MM-DD o la fecha del último pago."""
+        if obj.fecha_pago:
+            return obj.fecha_pago.strftime('%Y-%m-%d')
+        # Si no tiene fecha_pago pero tiene pagos, mostrar la fecha del último pago
+        ultimo_pago = obj.pagos.order_by('-fecha_pago').first()
+        if ultimo_pago:
+            return ultimo_pago.fecha_pago.strftime('%Y-%m-%d')
+        return '-'
+    fecha_pago_display.short_description = "Fecha de pago"
+    
+    # ========== FASE 2: MÉTODOS DISPLAY PARA PAGOS PARCIALES ==========
+    
+    def total_pagado_display(self, obj):
+        """Muestra total pagado al proveedor."""
+        total = float(obj.total_pagado)
+        if total > 0:
+            total_str = f"${total:,.2f}"
+            return format_html('<span style="color: #e74c3c;">{}</span>', total_str)
+        return format_html('<span style="color: #95a5a6;">$0.00</span>')
+    total_pagado_display.short_description = "Pagado"
+    total_pagado_display.admin_order_field = "total"
+    
+    def saldo_pendiente_display(self, obj):
+        """Muestra saldo pendiente por pagar."""
+        saldo = float(obj.saldo_pendiente)
+        if saldo > 0:
+            saldo_str = f"${saldo:,.2f}"
+            return format_html('<span style="color: #27ae60;">{}</span>', saldo_str)
+        return format_html('<span style="color: #95a5a6;">$0.00</span>')
+    saldo_pendiente_display.short_description = "Por Pagar"
+    
+    def estado_pago_display(self, obj):
+        """Muestra estado de pago sin fondo de color (solo emoji y texto)."""
+        estado = obj.estado_pago
+        
+        badges = {
+            "pagada": ('<span style="color: #27ae60;">✅ PAGADA</span>'),
+            "parcial": ('<span style="color: #f39c12;">⚠️ PARCIAL</span>'),
+            "pendiente": ('<span style="color: #e74c3c;">🔴 PENDIENTE</span>'),
+        }
+        
+        return format_html(badges.get(estado, estado))
+    estado_pago_display.short_description = "Estado Pago"
+    
+    def info_pagos_display(self, obj):
+        """Muestra resumen completo de pagos en el detalle de compra."""
+        if not obj.pk:
+            return "Guarda la compra primero"
+        
+        html = f"""
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+            <h3 style="margin-top: 0; color: #495057;">💰 Resumen de Pagos a Proveedor</h3>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #e9ecef;">
+                    <th colspan="2" style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">COMPRA</th>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">Total compra:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6; font-weight: bold;">${obj.total:,.2f}</td>
+                </tr>
+                
+                <tr style="background: #e9ecef;">
+                    <th colspan="2" style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">PAGOS REALIZADOS</th>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">Total pagado:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #e74c3c; font-weight: bold;">${obj.total_pagado:,.2f}</td>
+                </tr>
+                
+                <tr style="background: #e9ecef;">
+                    <th colspan="2" style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">POR PAGAR</th>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6;">Saldo pendiente:</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #dee2e6; color: #27ae60; font-weight: bold;">${obj.saldo_pendiente:,.2f}</td>
+                </tr>
+            </table>
+            
+            <p style="margin-top: 15px; margin-bottom: 0; font-size: 12px; color: #6c757d;">
+                <strong>Estado:</strong> {obj.estado_pago.upper()} | 
+                <strong>Pagos registrados:</strong> {obj.pagos.count()}
+            </p>
+        </div>
+        """
+        return format_html(html)
+    info_pagos_display.short_description = "Información de Pagos"
     
     def get_urls(self):
         """Registrar URLs custom para procesar PNR y procesar facturas Drive."""
@@ -624,4 +725,5 @@ class CompraAdmin(admin.ModelAdmin):
 # Registro de modelos en el admin
 admin.site.register(Compra, CompraAdmin)
 admin.site.register(Proveedor, ProveedorAdmin)
-admin.site.register(CompraProducto, CompraProductoAdmin)  
+admin.site.register(CompraProducto, CompraProductoAdmin)
+admin.site.register(PagoCompra)  # Fase 2: Pagos parciales

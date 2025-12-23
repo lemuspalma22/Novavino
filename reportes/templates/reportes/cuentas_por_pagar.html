@@ -1,0 +1,110 @@
+{% extends 'reportes/base.html' %}
+
+{% block title %}Cuentas por Pagar{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card red">
+        <div class="stat-label">🏦 Total por Pagar</div>
+        <div class="stat-value">${{ total_por_pagar|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_compras }} compras pendientes</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🏭 Cuentas por Pagar por Proveedor</h2>
+    {% if por_proveedor %}
+    <table>
+        <thead>
+            <tr>
+                <th>Proveedor</th>
+                <th style="text-align: center;">Compras Pendientes</th>
+                <th style="text-align: right;">Saldo Total</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in por_proveedor %}
+            <tr>
+                <td><strong>{{ item.proveedor }}</strong></td>
+                <td style="text-align: center;">
+                    <span class="badge badge-info">{{ item.compras|length }}</span>
+                </td>
+                <td style="text-align: right;" class="text-danger">
+                    ${{ item.total_saldo|floatformat:2 }}
+                </td>
+                <td>
+                    {% if item.total_saldo > 10000 %}
+                        <span class="badge badge-warning">Alta prioridad</span>
+                    {% else %}
+                        <span class="badge badge-info">Normal</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background: #f8f9fa; font-weight: bold;">
+                <td colspan="2">TOTAL</td>
+                <td style="text-align: right;" class="text-danger">${{ total_por_pagar|floatformat:2 }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <p class="text-muted" style="text-align: center; padding: 40px;">
+        ✅ No hay cuentas por pagar pendientes
+    </p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📝 Detalle de Compras Pendientes</h2>
+    {% if por_proveedor %}
+    {% for prov in por_proveedor %}
+        <div style="margin-bottom: 30px;">
+            <h3 style="color: #495057; margin-bottom: 15px;">{{ prov.proveedor }}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th style="text-align: right;">Total</th>
+                        <th style="text-align: right;">Pagado</th>
+                        <th style="text-align: right;">Por Pagar</th>
+                        <th style="text-align: center;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in prov.compras %}
+                    <tr>
+                        <td>{{ compra.folio }}</td>
+                        <td>{{ compra.fecha|date:"d/m/Y" }}</td>
+                        <td style="text-align: right;">${{ compra.total|floatformat:2 }}</td>
+                        <td style="text-align: right;" class="text-danger">${{ compra.total_pagado|floatformat:2 }}</td>
+                        <td style="text-align: right;" class="text-success">${{ compra.saldo_pendiente|floatformat:2 }}</td>
+                        <td style="text-align: center;">
+                            {% if compra.estado_pago == 'parcial' %}
+                                <span class="badge badge-warning">Parcial</span>
+                            {% else %}
+                                <span class="badge badge-danger">Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ Nota:</strong> Los montos "Por Pagar" representan dinero comprometido. Este dinero debe estar disponible en caja para liquidar obligaciones con proveedores.
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/admin/compras/compra/?estado_pago__exact=parcial" class="btn">Ver Compras en Admin</a>
+    <a href="{% url 'reportes:dashboard' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+{% endblock %}

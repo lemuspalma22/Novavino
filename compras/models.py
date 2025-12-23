@@ -1,4 +1,7 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from decimal import Decimal, ROUND_HALF_UP
 
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
@@ -49,6 +52,49 @@ class Compra(models.Model):
     @property
     def estado(self):
         return "Viva" if not self.pagado else "Muerta"
+    
+    # ========== FASE 2: PROPIEDADES PARA PAGOS PARCIALES ==========
+    
+    @property
+    def total_pagado(self):
+        """Total de pagos realizados hasta el momento.
+        
+        Compatible con sistema antiguo: si pagado=True pero no hay pagos, retorna el total.
+        """
+        total = sum(pago.monto for pago in self.pagos.all())
+        
+        # Compatibilidad: si está pagada con el sistema antiguo pero no tiene pagos registrados
+        if self.pagado and total == 0:
+            return self.total
+        
+        return Decimal(total).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    
+    @property
+    def saldo_pendiente(self):
+        """Saldo que falta por pagar al proveedor."""
+        saldo = self.total - self.total_pagado
+        return max(Decimal("0.00"), saldo).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    
+    @property
+    def estado_pago(self):
+        """Estado del pago: pendiente, parcial, pagada, vencida.
+        
+        Compatible con sistema antiguo: si pagado=True, retorna 'pagada' directamente.
+        """
+        # Compatibilidad: si está marcada como pagada con el sistema antiguo
+        if self.pagado:
+            return "pagada"
+        
+        # Sistema nuevo: basado en pagos parciales
+        if self.total_pagado == 0:
+            # Sin pagos - todas las compras son "pendientes" (no hay vencimiento)
+            return "pendiente"
+        elif self.total_pagado >= self.total:
+            # Pagada completamente
+            return "pagada"
+        else:
+            # Pago parcial
+            return "parcial"
 
     def __str__(self):
         return f"Compra {self.folio} - Proveedor: {self.proveedor} - Estado: {self.estado}"
@@ -79,4 +125,74 @@ class CompraProducto(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} en Compra {self.compra.folio}"
+
+
+class PagoCompra(models.Model):
+    """
+    Registro de un pago (total o parcial) realizado a un proveedor por una compra.
+    Permite trazabilidad completa de pagos a proveedores.
+    """
+    METODO_PAGO_CHOICES = [
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia'),
+        ('cheque', 'Cheque'),
+        ('tarjeta', 'Tarjeta'),
+        ('deposito', 'Depósito'),
+        ('otro', 'Otro'),
+    ]
+    
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='pagos')
+    fecha_pago = models.DateField(help_text="Fecha en que se realizó el pago")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, help_text="Monto del pago")
+    metodo_pago = models.CharField(
+        max_length=20,
+        choices=METODO_PAGO_CHOICES,
+        default='transferencia',
+        help_text="Método utilizado para el pago"
+    )
+    referencia = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Número de cheque, referencia de transferencia, etc."
+    )
+    notas = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Notas adicionales sobre el pago"
+    )
+    creado_en = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-fecha_pago']
+        verbose_name = "Pago de Compra"
+        verbose_name_plural = "Pagos de Compras"
+    
+    def clean(self):
+        """Validaciones del pago."""
+        if self.monto <= 0:
+            raise ValidationError("El monto del pago debe ser mayor a 0")
+        
+        # Validar que no se sobrepase el total (opcional - permitir sobrepago para casos especiales)
+        # if self.compra:
+        #     total_pagos = sum(p.monto for p in self.compra.pagos.exclude(pk=self.pk))
+        #     if total_pagos + self.monto > self.compra.total:
+        #         raise ValidationError(f"El total de pagos (${total_pagos + self.monto}) sobrepasa el total de la compra (${self.compra.total})")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
+        # Actualizar estado de la compra
+        if self.compra:
+            total_pagado = sum(p.monto for p in self.compra.pagos.all())
+            if total_pagado >= self.compra.total:
+                # Marcar como pagada si se completó el pago
+                self.compra.pagado = True
+                if not self.compra.fecha_pago:
+                    self.compra.fecha_pago = self.fecha_pago
+                self.compra.save(update_fields=['pagado', 'fecha_pago'])
+    
+    def __str__(self):
+        return f"Pago de ${self.monto} - Compra {self.compra.folio} ({self.fecha_pago})"
 

@@ -22,6 +22,11 @@ def extract_invoice_data(pdf_path):
     elif "CDO200903RR1" in text or "OLI CORP" in text:
         extractor = ExtractorOliCorp(text, pdf_path)
     else:
-        raise ValueError("Proveedor no soportado o no detectado")
+        # Mensaje claro indicando que debe registrarse manualmente
+        raise ValueError(
+            "Esta factura no pertenece a ningún proveedor con extractor automático. "
+            "Proveedores soportados: Secretos de la Vid, Vieja Bodega, Distribuidora Secocha, Oli Corp. "
+            "Por favor, registra esta factura manualmente desde el admin de Compras."
+        )
 
     return extractor.parse()
