@@ -1,0 +1,21 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Sistema Novavino - Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">Sistema Novavino</a>
+</h1>
+{% endblock %}
+
+{% block userlinks %}
+<div style="display: flex; align-items: center; gap: 15px;">
+    <a href="/reportes/" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s;">
+        📊 Reportes Financieros
+    </a>
+    <a href="{% url 'corte_semanal_page' %}" style="padding: 8px 16px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s;">
+        📋 Corte Semanal
+    </a>
+    {{ block.super }}
+</div>
+{% endblock %}

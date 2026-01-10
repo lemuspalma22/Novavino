@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Novavino{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <h1>Sistema Novavino</h1>
+        <nav>
+            <a href="/admin/">Admin</a> |
+            <a href="/ventas/corte-semanal/">Corte Semanal</a>
+			<a href="/compras/corte-compras/">Corte de Compras</a> 
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        <p>Contenido de la página.</p>
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Novavino</p>
+    </footer>
+</body>
+</html>

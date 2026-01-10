@@ -1,0 +1,8 @@
+<h1>Actualizar stock desde CSV</h1>
+<p>Columnas requeridas: <code>producto, stock</code>. “producto” puede ser nombre o alias.</p>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Subir CSV</button>
+</form>
+<p><a href="{% url 'exportar_plantilla_csv' %}">Descargar plantilla completa de productos</a></p>

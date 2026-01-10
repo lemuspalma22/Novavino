@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 id="titulo-corte">Corte Semanal de Facturas</h2>
+
+<form id="form-corte" method="get" action="{% url 'corte_semanal' %}">
+  <label>Modo:</label>
+  <select id="modo" name="modo">
+    <option value="contable">Contable (por fecha de factura)</option>
+    <option value="flujo">Flujo (por fecha de pago)</option>
+  </select>
+
+  <label>Fecha Inicio:</label>
+  <input type="date" id="start_date" name="start_date" required>
+  <label>Fecha Fin:</label>
+  <input type="date" id="end_date" name="end_date" required>
+  <button type="submit">Generar Reporte</button>
+</form>
+
+<form id="form-export-csv" action="{% url 'exportar_csv' %}" method="get">
+  <input type="hidden" id="csv_fecha_inicio" name="fecha_inicio">
+  <input type="hidden" id="csv_fecha_fin" name="fecha_fin">
+  <input type="hidden" id="csv_modo" name="modo">
+  <button type="submit">📥 Exportar a CSV</button>
+</form>
+
+<form id="form-export-pdf" action="{% url 'exportar_pdf' %}" method="get">
+  <input type="hidden" id="pdf_fecha_inicio" name="fecha_inicio">
+  <input type="hidden" id="pdf_fecha_fin" name="fecha_fin">
+  <input type="hidden" id="pdf_modo" name="modo">
+  <button type="submit">📄 Exportar a PDF</button>
+</form>
+
+<table id="tabla-reporte" border="1">
+  <thead>
+    <tr>
+      <th>
+        <input type="checkbox" id="toggle-all" checked title="Seleccionar/Deseleccionar todo">
+      </th>
+      <th>Folio Factura</th>
+      <th>Cliente</th>
+      <th>Fecha</th>
+      <th>Total Venta</th>
+      <th>Costo Proveedores</th>
+      <th>Transporte</th>
+      <th>Ganancia Bruta</th>
+      <th>% Ganancia</th>
+      <th>Productos Personalizados</th>
+      <th>Productos No Personalizados</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot>
+    <tr>
+      <th></th>
+      <th colspan="3">Total</th>
+      <th id="total-venta">0</th>
+      <th id="total-costo">0</th>
+      <th id="total-transporte">0</th>
+      <th id="total-ganancia">0</th>
+      <th id="total-porcentaje-ganancia">0</th>
+      <th id="total-productos-personalizados">0</th>
+      <th id="total-productos-no-personalizados">0</th>
+    </tr>
+  </tfoot>
+</table>
+
+<script>
+  function diccionarioAHTML(diccionario) {
+    if (!diccionario || diccionario === "Ninguno") return "Ninguno";
+    return Object.entries(diccionario).map(([k, v]) => `<b>${k}:</b> ${v}`).join("<br>");
+  }
+  const toNum = v => (typeof v === "number" ? v : parseFloat(v || 0));
+
+  document.getElementById("form-corte").onsubmit = function (event) {
+    event.preventDefault();
+
+    const start = document.getElementById("start_date").value;
+    const end   = document.getElementById("end_date").value;
+    const modo  = document.getElementById("modo").value;
+    if (!start || !end) return;
+
+    const url = new URL("{% url 'corte_semanal' %}", window.location.origin);
+    url.searchParams.set("start_date", start);
+    url.searchParams.set("end_date", end);
+    url.searchParams.set("modo", modo);
+
+    fetch(url, { method: "GET" })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("titulo-corte").innerText =
+          data.modo === "flujo" ? "Corte por Fecha de Pago (Flujo)" :
+                                  "Corte por Fecha de Factura (Contable)";
+
+        const tbody = document.querySelector("#tabla-reporte tbody");
+        tbody.innerHTML = "";
+
+        (data.reporte || []).forEach(f => {
+          const row = `
+            <tr class="factura-row"
+                data-total-venta="${toNum(f.total_venta)}"
+                data-costo="${toNum(f.costo_proveedores)}"
+                data-transporte="${toNum(f.transporte)}"
+                data-ganancia="${toNum(f.ganancia)}">
+              <td style="text-align: center;">
+                <input type="checkbox" class="factura-checkbox" checked>
+              </td>
+              <td>${f.folio}</td>
+              <td>${f.cliente}</td>
+              <td>${f.fecha}</td>
+              <td>${toNum(f.total_venta).toFixed(2)}</td>
+              <td>${toNum(f.costo_proveedores).toFixed(2)}</td>
+              <td>${toNum(f.transporte).toFixed(2)}</td>
+              <td>${toNum(f.ganancia).toFixed(2)}</td>
+              <td>${toNum(f.porcentaje_ganancia).toFixed(2)}%</td>
+              <td>${diccionarioAHTML(f.productos_personalizados)}</td>
+              <td>${diccionarioAHTML(f.productos_no_personalizados)}</td>
+            </tr>`;
+          tbody.insertAdjacentHTML("beforeend", row);
+        });
+        
+        // Agregar event listeners a los checkboxes
+        attachCheckboxListeners();
+
+        const tot = data.totales || {};
+        document.getElementById("total-venta").innerText = toNum(tot.total_venta).toFixed(2);
+        document.getElementById("total-costo").innerText = toNum(tot.total_costo_proveedores).toFixed(2);
+        document.getElementById("total-transporte").innerText = toNum(tot.total_transporte).toFixed(2);
+        document.getElementById("total-ganancia").innerText = toNum(tot.total_ganancia).toFixed(2);
+        document.getElementById("total-porcentaje-ganancia").innerText = toNum(tot.porcentaje_ganancia).toFixed(2) + "%";
+        document.getElementById("total-productos-personalizados").innerHTML = diccionarioAHTML(tot.productos_personalizados);
+        document.getElementById("total-productos-no-personalizados").innerHTML = diccionarioAHTML(tot.productos_no_personalizados);
+      })
+      .catch(err => { console.error(err); alert("Ocurrió un error al generar el reporte."); });
+  };
+
+  function setExportDates() {
+    const start = document.getElementById("start_date").value;
+    const end   = document.getElementById("end_date").value;
+    const modo  = document.getElementById("modo").value;
+    if (!start || !end) { alert("Debes seleccionar ambas fechas."); return false; }
+
+    document.getElementById("csv_fecha_inicio").value = start;
+    document.getElementById("csv_fecha_fin").value    = end;
+    document.getElementById("csv_modo").value         = modo;
+
+    document.getElementById("pdf_fecha_inicio").value = start;
+    document.getElementById("pdf_fecha_fin").value    = end;
+    document.getElementById("pdf_modo").value         = modo;
+    return true;
+  }
+  document.getElementById("form-export-csv").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
+  document.getElementById("form-export-pdf").onsubmit = e => { if (!setExportDates()) e.preventDefault(); };
+
+  // ====================
+  // FUNCIONALIDAD DE CHECKBOXES
+  // ====================
+  
+  function recalcularTotales() {
+    let totalVenta = 0;
+    let totalCosto = 0;
+    let totalTransporte = 0;
+    let totalGanancia = 0;
+
+    // Iterar sobre todas las filas
+    document.querySelectorAll('.factura-row').forEach(row => {
+      const checkbox = row.querySelector('.factura-checkbox');
+      
+      if (checkbox && checkbox.checked) {
+        // Sumar valores de esta fila
+        totalVenta += parseFloat(row.dataset.totalVenta) || 0;
+        totalCosto += parseFloat(row.dataset.costo) || 0;
+        totalTransporte += parseFloat(row.dataset.transporte) || 0;
+        totalGanancia += parseFloat(row.dataset.ganancia) || 0;
+      }
+    });
+
+    // Calcular porcentaje de ganancia
+    const porcentajeGanancia = totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0;
+
+    // Actualizar totales en la tabla
+    document.getElementById('total-venta').textContent = totalVenta.toFixed(2);
+    document.getElementById('total-costo').textContent = totalCosto.toFixed(2);
+    document.getElementById('total-transporte').textContent = totalTransporte.toFixed(2);
+    document.getElementById('total-ganancia').textContent = totalGanancia.toFixed(2);
+    document.getElementById('total-porcentaje-ganancia').textContent = porcentajeGanancia.toFixed(2) + '%';
+  }
+
+  function attachCheckboxListeners() {
+    // Escuchar cambios en checkboxes individuales
+    document.querySelectorAll('.factura-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        // Actualizar estado del toggle-all
+        const allCheckboxes = document.querySelectorAll('.factura-checkbox');
+        const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+        document.getElementById('toggle-all').checked = allChecked;
+        
+        recalcularTotales();
+      });
+    });
+  }
+
+  // Toggle todas las facturas
+  document.getElementById('toggle-all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.factura-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = this.checked;
+    });
+    recalcularTotales();
+  });
+</script>
+{% endblock %}

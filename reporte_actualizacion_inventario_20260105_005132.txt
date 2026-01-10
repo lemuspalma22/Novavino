@@ -1,0 +1,634 @@
+================================================================================
+REPORTE DE ACTUALIZACIÓN COMPLETA DE INVENTARIO
+================================================================================
+
+Fecha: 2026-01-05 00:51:32
+
+RESUMEN:
+  - Stock actualizado: 123 productos
+  - Productos borrados: 0
+  - Productos agregados: 0
+
+PRODUCTOS BORRADOS:
+
+PRODUCTOS AGREGADOS:
+
+================================================================================
+CAMBIOS DE STOCK DETALLADOS:
+================================================================================
+
+3 Medallas Santa Rita Carmenere
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+5 Vite
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+ALBA VEGA ALBARIÑO BLANCO
+  Stock anterior: 9
+  Stock nuevo:    9
+  Diferencia:     +0
+
+Almas Triunfantes Mezcal Ensamble
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Almas Triunfantes Mezcal Espadin
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Altavilla de la Corte
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Altotinto Chardonnay
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+Altotinto Chardonnay Personalizado Crabster
+  Stock anterior: 18
+  Stock nuevo:    18
+  Diferencia:     +0
+
+Altotinto Sauvignon Blanc
+  Stock anterior: 2
+  Stock nuevo:    2
+  Diferencia:     +0
+
+Altotinto sauvignon blanc personalizado Molusk
+  Stock anterior: 24
+  Stock nuevo:    24
+  Diferencia:     +0
+
+Altotinto Selección personalizado Scattola
+  Stock anterior: 36
+  Stock nuevo:    36
+  Diferencia:     +0
+
+ANÉCDOTA BLEND
+  Stock anterior: 13
+  Stock nuevo:    13
+  Diferencia:     +0
+
+Anécdota Cabernet Merlot
+  Stock anterior: 16
+  Stock nuevo:    16
+  Diferencia:     +0
+
+Anécdota Chardonnay Chenin
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Anécdota Chenin Blanc
+  Stock anterior: 18
+  Stock nuevo:    18
+  Diferencia:     +0
+
+Anécdota Moscatel Alejandría
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Anecdota Rose Cabernet Merlot
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Bacanora Yoeme
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Caeles Syrah
+  Stock anterior: 9
+  Stock nuevo:    9
+  Diferencia:     +0
+
+Carelli 34 Cabernet franc
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Carlos Montes Criado en Roble 12M Tannat
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Carlos Montes Merlot
+  Stock anterior: 11
+  Stock nuevo:    11
+  Diferencia:     +0
+
+Carlos Montes Tannat
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Carlos Montes Tannat Cabernet
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+Chiappela Tannat
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Chiaramonte Nero D'avola
+  Stock anterior: 16
+  Stock nuevo:    16
+  Diferencia:     +0
+
+Coyote Vibora Sotol
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+Criado en Roble Tannat
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Elegido Tannat Cabernet Merlot
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Elite Malbec
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Elite Nebbiolo
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Espumoso Dimond imperial
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Evento vinos
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+FIRRIATO SANTAGOSTINO BAGLIO SORIA Nero
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Flumen Prosecco
+  Stock anterior: 14
+  Stock nuevo:    14
+  Diferencia:     +0
+
+Fuente Viña Garnacha Rose
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Gaudensius Blanc de Noir
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Gin Marconi 46
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Hida
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Hida tinto
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Il Lemos
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+Ilivia Leone de Castris primitivo
+  Stock anterior: 39
+  Stock nuevo:    39
+  Diferencia:     +0
+
+Imago Chardonnay
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Iron Seven Crianza
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+KBU Reservado Merlot
+  Stock anterior: 24
+  Stock nuevo:    24
+  Diferencia:     +0
+
+LEONE DE CASTRIS ILLIVIA Negroamaro 100%
+  Stock anterior: 10
+  Stock nuevo:    10
+  Diferencia:     +0
+
+Leone Di Castris Primitivo di Manduria
+  Stock anterior: 8
+  Stock nuevo:    8
+  Diferencia:     +0
+
+Madero Cabernet Franc
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Montepulciano 1.5L
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Ottobuche
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+Pau Moscato
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Pequeña Vasija Malbec Syrah
+  Stock anterior: 1
+  Stock nuevo:    1
+  Diferencia:     +0
+
+Piarelle Passito
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Picahaña Chenin Blanc
+  Stock anterior: 13
+  Stock nuevo:    13
+  Diferencia:     +0
+
+PLENO BLANCO NAVARRA
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+PLENO CRIANZA NAVARRA
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+PLENO GRAN RESERVA
+  Stock anterior: 11
+  Stock nuevo:    11
+  Diferencia:     +0
+
+PLENO RESERVA NAVARRA
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+PLENO ROSADO NAVARRA
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+PLENO TEMPRANILLO TINTO
+  Stock anterior: 9
+  Stock nuevo:    9
+  Diferencia:     +0
+
+POLI ELISIR LIMONE / LIMONCELLO
+  Stock anterior: 2
+  Stock nuevo:    2
+  Diferencia:     +0
+
+Poli Sarpa Blanca
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Producto Test 1
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Producto Test 2
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Ramón Roqueta
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Reserva Familiar tannat
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+Rocca Lupo Nero
+  Stock anterior: 14
+  Stock nuevo:    14
+  Diferencia:     +0
+
+Rocca Merlot
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Rocca Montepulciano D'abruzzo
+  Stock anterior: 11
+  Stock nuevo:    11
+  Diferencia:     +0
+
+Rocca Perciatta inzolia Chardonnay
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Rocca Perciatta Nero D'avola Syrah
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+Rocca pinot grigio Rosé
+  Stock anterior: 13
+  Stock nuevo:    13
+  Diferencia:     +0
+
+Rocca Sangiovese
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+Rocca Zinfandel Blush
+  Stock anterior: 12
+  Stock nuevo:    12
+  Diferencia:     +0
+
+Santa Sofía White Zinfandel
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Scaia Corvina
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+Scaia Garganega Chardonnay
+  Stock anterior: 7
+  Stock nuevo:    7
+  Diferencia:     +0
+
+Siglo XXl Sauvignon Blanc
+  Stock anterior: 5
+  Stock nuevo:    5
+  Diferencia:     +0
+
+Sotol Jon Oro Coyamel
+  Stock anterior: 3
+  Stock nuevo:    3
+  Diferencia:     +0
+
+Spritz Rosado
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Spritz Tinto
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+Toro de piedra Gran reserva carmenere Cabernet
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+TRES RIBERAS "HA PASADO UN ÁNGEL"
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.B. ELITE VIII ALBARIÑO 750 ML
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.B. MIYABI ANEC CHENIN BLANC 750 ML
+  Stock anterior: 60
+  Stock nuevo:    60
+  Diferencia:     +0
+
+V.T. ALTA RESERVA CABERNET FRANC 750 ML
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.T. ALTOTINTO GRAN CABERNET 750 ML
+  Stock anterior: 13
+  Stock nuevo:    13
+  Diferencia:     +0
+
+V.T. ALTOTINTO NEBBIOLO 750 ML.
+  Stock anterior: 15
+  Stock nuevo:    15
+  Diferencia:     +0
+
+V.T. BACALAUH SAUVGNON BLANC 750 ML
+  Stock anterior: 71
+  Stock nuevo:    71
+  Diferencia:     +0
+
+V.T. BIB TINTO 4 MESES 3 LT
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+V.T. CHIAPPELLA TANNAT 750 ml.
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.T. EPICO AN ESPUMOSO BLANCO 750 ML
+  Stock anterior: 47
+  Stock nuevo:    47
+  Diferencia:     +0
+
+V.T. HOTEL CIGNO P.P. 750 ML
+  Stock anterior: 10
+  Stock nuevo:    10
+  Diferencia:     +0
+
+V.T. PAU PINOT NOIR 750ML
+  Stock anterior: 10
+  Stock nuevo:    10
+  Diferencia:     +0
+
+V.T. PICAHAÑA PRIMERO PASOS 750ML
+  Stock anterior: 29
+  Stock nuevo:    29
+  Diferencia:     +0
+
+V.T. PIZZA PARADISO P. P. 750ML
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.T. PIZZA PARADISO P. P. 750ML
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+V.T. SAN BRAVO MALBEC 9M 750 ML
+  Stock anterior: 30
+  Stock nuevo:    30
+  Diferencia:     +0
+
+V.T. SAN BRAVO MERLOT 4M 750
+  Stock anterior: 108
+  Stock nuevo:    108
+  Diferencia:     +0
+
+V.T. SAN BRAVO SELECCION 750 ML
+  Stock anterior: 42
+  Stock nuevo:    42
+  Diferencia:     +0
+
+V.T. SICOMORO ENSAMBLE 6 MESES 750ML
+  Stock anterior: 24
+  Stock nuevo:    24
+  Diferencia:     +0
+
+V.T. SICOMORO P.P 750ML
+  Stock anterior: 35
+  Stock nuevo:    35
+  Diferencia:     +0
+
+V.T. VALLE OCULTO 9 MESES 750 ML
+  Stock anterior: 19
+  Stock nuevo:    19
+  Diferencia:     +0
+
+V.T. VALLE OCULTO CABERNET 6M 750ML
+  Stock anterior: 15
+  Stock nuevo:    15
+  Diferencia:     +0
+
+V.T. VALLE OCULTO MALBEC 750ML
+  Stock anterior: 15
+  Stock nuevo:    15
+  Diferencia:     +0
+
+V.T. VALLE OCULTO MERLOT 750 ML
+  Stock anterior: 26
+  Stock nuevo:    26
+  Diferencia:     +0
+
+VB Carelli 34 torrontes
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VB Rocca pinot grigio
+  Stock anterior: 12
+  Stock nuevo:    12
+  Diferencia:     +0
+
+VE Dueto spumante Pinot bianco Chardonay
+  Stock anterior: 16
+  Stock nuevo:    16
+  Diferencia:     +0
+
+Vidente Chardonnay
+  Stock anterior: 22
+  Stock nuevo:    22
+  Diferencia:     +0
+
+Vigna Case Alte Sauvignon Blanc
+  Stock anterior: 6
+  Stock nuevo:    6
+  Diferencia:     +0
+
+VR Five Roses
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Altotinto selección
+  Stock anterior: 17
+  Stock nuevo:    17
+  Diferencia:     +0
+
+VT CABERNET SAUVIGNON PERSONALIZADO PICAHAÑA
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Cabernet Sauvignon verdades  6M.
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Fuente Viña Merlot
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT KBU CABERNET SAUVIGNON
+  Stock anterior: 19
+  Stock nuevo:    19
+  Diferencia:     +0
+
+VT KBU CARMENERE
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT NEBBIOLO PERSONALIZADO PICAHAÑA
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Protos 9
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Siglo XXl Pinot Noir Rva
+  Stock anterior: 4
+  Stock nuevo:    4
+  Diferencia:     +0
+
+VT Toro de Piedra Carmenere Cabernet Gran Reserva
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+
+VT Valpolicela ripssso Monti Garbi
+  Stock anterior: 0
+  Stock nuevo:    0
+  Diferencia:     +0
+

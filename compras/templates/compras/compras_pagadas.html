@@ -1,0 +1,43 @@
+<!-- compras/templates/compras/compras_pagadas.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Compras Pagadas</title>
+</head>
+<body>
+    <h1>Compras Pagadas en un Periodo</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="fecha_inicio">Fecha Inicio:</label>
+        <input type="date" name="fecha_inicio" id="fecha_inicio" required>
+        
+        <label for="fecha_fin">Fecha Fin:</label>
+        <input type="date" name="fecha_fin" id="fecha_fin" required>
+        
+        <button type="submit">Buscar</button>
+    </form>
+    
+    {% if compras_pagadas %}
+        <h2>Resultados</h2>
+        <table border="1">
+            <tr>
+                <th>Folio</th>
+                <th>Proveedor</th>
+                <th>Total</th>
+                <th>Fecha de Pago</th>
+                <th>Estado</th>
+            </tr>
+            {% for compra in compras_pagadas %}
+            <tr>
+                <td>{{ compra.folio }}</td>
+                <td>{{ compra.proveedor }}</td>
+                <td>{{ compra.total }}</td>
+                <td>{{ compra.fecha_pago }}</td>
+                <td>{{ compra.estado }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+</body>
+</html>

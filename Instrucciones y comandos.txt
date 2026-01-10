@@ -1,0 +1,26 @@
+- Instalar MySQL Client para trabajar con MySQL
+	pip install mysqlclient
+
+- Activar el entorno virtual en la carpeta raíz del proyecto:
+	venv\Scripts\activate
+
+- Crear una aplicación (en este caso una aplicación llamada "Inventario")
+	python manage.py startapp inventario
+
+- Se agregan los modelos desde model.py de la aplicación creada desde el administrador (admin.py) de la aplicación creada
+- Se agrega la app creada ("inventario" en nuestro caso) en settings.py desde el crm_project
+
+- Se hacen las migraciones
+	python manage.py makemigrations inventario
+
+- Se migra
+	python manage.py migrate
+
+
+- Levantar el servidor localmente:
+	python manage.py runserver
+	Ruta: http://127.0.0.1:8000/admin/
+
+- Back Up (por ejemplo de inventario) [Bash]
+$ python manage.py dumpdata inventario --indent 2 > backup_inventario.json
+

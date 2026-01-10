@@ -1,0 +1,160 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Confirmar Fusión de Productos{% endblock %}
+
+{% block content %}
+<h1>Confirmar Fusión de Productos</h1>
+
+<div class="module" style="margin-bottom: 20px; background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px;">
+    <h2 style="margin-top: 0; color: #856404;">ℹ️ Información sobre Fusión Suave</h2>
+    <p style="margin: 5px 0;">
+        <strong>La Fusión Suave NO elimina productos</strong>, solo los marca como fusionados.
+    </p>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>El producto principal quedará <strong>activo</strong> y recibirá el stock de los demás</li>
+        <li>Los productos secundarios quedarán <strong>inactivos</strong> pero seguirán en la base de datos</li>
+        <li>Las facturas y compras antiguas <strong>NO se modifican</strong></li>
+        <li>Se crearán <strong>aliases automáticamente</strong> para búsquedas futuras</li>
+        <li>La fusión es <strong>reversible</strong> si es necesario</li>
+    </ul>
+</div>
+
+<form method="post" action="">
+    {% csrf_token %}
+    
+    <div class="module">
+        <h2>Selecciona el Producto Principal</h2>
+        <p>El producto principal quedará activo y recibirá todo el stock.</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background-color: #f8f8f8;">
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Principal</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Nombre</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Stock</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Proveedor</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Precio Venta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr style="{% if not producto.activo %}background-color: #f5f5f5;{% endif %}">
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="principal_id" value="{{ producto.id }}" 
+                               {% if forloop.first %}checked{% endif %}
+                               required>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        <strong>{{ producto.nombre }}</strong>
+                        {% if not producto.activo %}
+                            <span style="color: #e74c3c; font-size: 0.9em;">(Inactivo)</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        <strong>{{ producto.stock }}</strong>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {{ producto.proveedor.nombre }}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">
+                        ${{ producto.precio_venta }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background-color: #e8f5e9;">
+                    <th style="padding: 10px; border: 1px solid #ddd;" colspan="2">
+                        <strong>Stock Total Resultante:</strong>
+                    </th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        <strong style="color: #27ae60; font-size: 1.1em;">{{ stock_total }}</strong>
+                    </th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" colspan="2"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <div class="module" style="margin-top: 20px;">
+        <h2>Validaciones y Advertencias</h2>
+        <div id="validaciones-container">
+            <p style="color: #666; font-style: italic;">
+                Selecciona un producto principal arriba para ver las validaciones.
+            </p>
+        </div>
+    </div>
+    
+    <div class="module" style="margin-top: 20px;">
+        <h2>Razón de la Fusión (Opcional)</h2>
+        <p>
+            <textarea name="razon" rows="3" style="width: 100%; max-width: 600px;" 
+                      placeholder="Ej: Productos duplicados con nombres similares">Productos duplicados</textarea>
+        </p>
+    </div>
+    
+    <div class="submit-row" style="margin-top: 20px;">
+        <input type="submit" value="Confirmar Fusión" class="default" 
+               style="padding: 10px 20px; font-size: 14px;">
+        <a href="{% url 'admin:inventario_producto_changelist' %}" class="button cancel-link" 
+           style="padding: 10px 20px; margin-left: 10px;">Cancelar</a>
+    </div>
+</form>
+
+<script>
+// Datos de validación pasados desde el backend
+const validaciones = {{ validaciones_json|safe }};
+
+// Actualizar validaciones al cambiar el producto principal
+document.querySelectorAll('input[name="principal_id"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const productoId = parseInt(this.value);
+        const val = validaciones[productoId];
+        const container = document.getElementById('validaciones-container');
+        
+        if (!val) {
+            container.innerHTML = '<p style="color: #666;">No hay validaciones para este producto.</p>';
+            return;
+        }
+        
+        let html = '';
+        
+        // Errores
+        if (val.errores && val.errores.length > 0) {
+            html += '<div style="padding: 10px; background-color: #ffe6e6; border-left: 4px solid #e74c3c; margin-bottom: 10px;">';
+            html += '<strong style="color: #c0392b;">✗ Errores que impiden la fusión:</strong>';
+            html += '<ul style="margin: 5px 0; padding-left: 20px;">';
+            val.errores.forEach(error => {
+                html += '<li style="color: #c0392b;">' + error + '</li>';
+            });
+            html += '</ul></div>';
+        }
+        
+        // Advertencias
+        if (val.advertencias && val.advertencias.length > 0) {
+            html += '<div style="padding: 10px; background-color: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 10px;">';
+            html += '<strong style="color: #856404;">⚠️ Advertencias (puedes continuar):</strong>';
+            html += '<ul style="margin: 5px 0; padding-left: 20px;">';
+            val.advertencias.forEach(adv => {
+                html += '<li style="color: #856404;">' + adv + '</li>';
+            });
+            html += '</ul></div>';
+        }
+        
+        // Todo OK
+        if (val.es_valido && (!val.advertencias || val.advertencias.length === 0)) {
+            html += '<div style="padding: 10px; background-color: #e8f5e9; border-left: 4px solid #27ae60;">';
+            html += '<strong style="color: #229954;">✓ Todo correcto, puedes fusionar sin problemas.</strong>';
+            html += '</div>';
+        }
+        
+        container.innerHTML = html;
+    });
+});
+
+// Trigger al cargar la página para el primero seleccionado
+document.querySelector('input[name="principal_id"]:checked').dispatchEvent(new Event('change'));
+</script>
+
+{% endblock %}

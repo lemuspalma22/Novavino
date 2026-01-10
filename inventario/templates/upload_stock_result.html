@@ -1,0 +1,9 @@
+<h1>Resultado de actualización de stock</h1>
+<p>Productos actualizados: <b>{{ procesados }}</b></p>
+{% if no_encontrados %}
+  <h3>No encontrados (revisa nombre/alias):</h3>
+  <ul>{% for n in no_encontrados %}<li>{{ n }}</li>{% endfor %}</ul>
+{% else %}
+  <p>Todos los registros se actualizaron correctamente.</p>
+{% endif %}
+<p><a href="{% url 'upload_stock_csv' %}">Volver</a></p>

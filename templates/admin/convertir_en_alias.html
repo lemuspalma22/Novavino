@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>Se convertirán en alias los siguientes nombres:</p>
+  <ul>
+    {% for o in objetos %}
+      <li>{{ o.nombre_detectado }}</li>
+    {% endfor %}
+  </ul>
+
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="ids" value="{{ ids }}">
+    <button class="button default" type="submit">{% trans "Aplicar" %}</button>
+    <a class="button cancel-link" href="../">{% trans "Cancelar" %}</a>
+  </form>
+{% endblock %}

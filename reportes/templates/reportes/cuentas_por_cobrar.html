@@ -1,0 +1,126 @@
+{% extends 'reportes/base.html' %}
+
+{% block title %}Cuentas por Cobrar{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-label">💰 Total por Cobrar</div>
+        <div class="stat-value">${{ total_por_cobrar|floatformat:2|default:"0.00" }}</div>
+        <div class="stat-subtitle">{{ num_facturas }} facturas pendientes</div>
+    </div>
+    
+    <div class="stat-card red">
+        <div class="stat-label">⚠️ Facturas Vencidas</div>
+        <div class="stat-value">{{ num_vencidas }}</div>
+        <div class="stat-subtitle">${{ monto_vencido|floatformat:2|default:"0.00" }} vencido</div>
+    </div>
+</div>
+
+{% if num_vencidas > 0 %}
+<div class="alert alert-warning">
+    <strong>⚠️ Atención:</strong> Hay {{ num_vencidas }} factura(s) vencida(s) por un total de ${{ monto_vencido|floatformat:2 }}. Se recomienda realizar gestión de cobranza.
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>👥 Cuentas por Cobrar por Cliente</h2>
+    {% if por_cliente %}
+    <table>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th style="text-align: center;">Facturas</th>
+                <th style="text-align: right;">Saldo Total</th>
+                <th style="text-align: center;">Vencidas</th>
+                <th style="text-align: right;">Monto Vencido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in por_cliente %}
+            <tr>
+                <td><strong>{{ item.cliente }}</strong></td>
+                <td style="text-align: center;">
+                    <span class="badge badge-info">{{ item.facturas|length }}</span>
+                </td>
+                <td style="text-align: right;" class="text-success">
+                    ${{ item.total_saldo|floatformat:2 }}
+                </td>
+                <td style="text-align: center;">
+                    {% if item.vencidas > 0 %}
+                        <span class="badge badge-danger">{{ item.vencidas }}</span>
+                    {% else %}
+                        <span class="badge badge-success">0</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    {% if item.monto_vencido > 0 %}
+                        <span class="text-danger">${{ item.monto_vencido|floatformat:2 }}</span>
+                    {% else %}
+                        <span class="text-muted">$0.00</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted" style="text-align: center; padding: 40px;">
+        ✅ No hay cuentas por cobrar pendientes
+    </p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📅 Antigüedad de Saldos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Período</th>
+                <th style="text-align: center;">Facturas</th>
+                <th style="text-align: right;">Monto</th>
+                <th style="text-align: right;">% del Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>0-30 días (Al corriente)</td>
+                <td style="text-align: center;">
+                    <span class="badge badge-success">{{ antiguedad.dias_0_30.facturas }}</span>
+                </td>
+                <td style="text-align: right;">${{ antiguedad.dias_0_30.monto|floatformat:2 }}</td>
+                <td style="text-align: right;" class="text-muted">-</td>
+            </tr>
+            <tr>
+                <td>31-60 días</td>
+                <td style="text-align: center;">
+                    <span class="badge badge-info">{{ antiguedad.dias_31_60.facturas }}</span>
+                </td>
+                <td style="text-align: right;">${{ antiguedad.dias_31_60.monto|floatformat:2 }}</td>
+                <td style="text-align: right;" class="text-muted">-</td>
+            </tr>
+            <tr>
+                <td>61-90 días</td>
+                <td style="text-align: center;">
+                    <span class="badge badge-warning">{{ antiguedad.dias_61_90.facturas }}</span>
+                </td>
+                <td style="text-align: right;">${{ antiguedad.dias_61_90.monto|floatformat:2 }}</td>
+                <td style="text-align: right;" class="text-muted">-</td>
+            </tr>
+            <tr style="background: #fff3cd;">
+                <td><strong>+90 días (Crítico)</strong></td>
+                <td style="text-align: center;">
+                    <span class="badge badge-danger">{{ antiguedad.dias_mas_90.facturas }}</span>
+                </td>
+                <td style="text-align: right;"><strong>${{ antiguedad.dias_mas_90.monto|floatformat:2 }}</strong></td>
+                <td style="text-align: right;" class="text-muted">-</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/admin/ventas/factura/?estado_pago__exact=parcial" class="btn">Ver Facturas en Admin</a>
+    <a href="{% url 'reportes:dashboard' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+{% endblock %}

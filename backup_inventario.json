@@ -1,0 +1,2466 @@
+[
+{
+  "model": "inventario.producto",
+  "pk": 1,
+  "fields": {
+    "nombre": "Anecdota SB",
+    "uva": "Sauvignon Blanc",
+    "tipo": "blanco",
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "277.00",
+    "precio_venta": "295.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 2,
+  "fields": {
+    "nombre": "Anecdota Chardonnay Chenin Blanc",
+    "uva": "Chardonnay Chenin Blanc",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "204.00",
+    "precio_venta": "295.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 3,
+  "fields": {
+    "nombre": "Verdades (Valle Sto. Tomas)",
+    "uva": "Cabernet Sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "167.00",
+    "precio_venta": "269.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 4,
+  "fields": {
+    "nombre": "Anecdota CM",
+    "uva": "Cabernet Merlot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "169.00",
+    "precio_venta": "289.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 5,
+  "fields": {
+    "nombre": "Anecdota Blend (Santo Tomas)",
+    "uva": "Tempranillo,Merlot,Cabernet S",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "214.00",
+    "precio_venta": "315.00",
+    "es_personalizado": false,
+    "stock": 22
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 6,
+  "fields": {
+    "nombre": "Anecdota Primeros Pasos (4 meses)",
+    "uva": "Cabernet Merlot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "169.00",
+    "precio_venta": "289.00",
+    "es_personalizado": false,
+    "stock": 8
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 7,
+  "fields": {
+    "nombre": "Altotinto Chardonnay",
+    "uva": "Chardonnay",
+    "tipo": "blanco",
+    "descripcion": "Vino blanco mexicano con 9 meses en barrica",
+    "proveedor": 2,
+    "precio_compra": "259.00",
+    "precio_venta": "388.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 8,
+  "fields": {
+    "nombre": "Altotinto Seleccion (Medalla Oro CB)",
+    "uva": "Cabernet,Nebbiolo,Petit Verdot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "274.00",
+    "precio_venta": "420.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 9,
+  "fields": {
+    "nombre": "Altotinto (Valle Sto Tomas 15 meses)",
+    "uva": "Nebbiolo",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "349.00",
+    "precio_venta": "540.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 11,
+  "fields": {
+    "nombre": "Altotinto Gran Cabernet (18 meses)",
+    "uva": "Cabernet Sauvignon",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "424.00",
+    "precio_venta": "650.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 12,
+  "fields": {
+    "nombre": "Altotinto Alta Reserva (20 meses)",
+    "uva": "Cab Sauv,Temp,Nebbiolo,Merlot,Syrah",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "625.00",
+    "precio_venta": "790.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 65,
+  "fields": {
+    "nombre": "Altotinto Elite Albarino",
+    "uva": "Albarino",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 66,
+  "fields": {
+    "nombre": "Altotinto Elite Nebbiolo (22 meses)",
+    "uva": "Nebbiolo",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1300.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 67,
+  "fields": {
+    "nombre": "Altotinto Elite Tannat (22 meses)",
+    "uva": "Tannat",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1300.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 68,
+  "fields": {
+    "nombre": "Altotinto Elite Malbec (22 meses)",
+    "uva": "Malbec",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1300.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 69,
+  "fields": {
+    "nombre": "Altotinto Elite Blend 10 uvas (22 ms)",
+    "uva": "Nebbiolo Tannat Malbec CS Syrah",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1300.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 70,
+  "fields": {
+    "nombre": "Alto Tinto Cosecha Tardia 500 ml",
+    "uva": "Petite Syrah",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "325.00",
+    "precio_venta": "449.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 71,
+  "fields": {
+    "nombre": "Datum Quinta Monasterio (Valle Gpe.)",
+    "uva": "Merlot  Syrah  Nebbiolo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "473.00",
+    "precio_venta": "595.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 72,
+  "fields": {
+    "nombre": "Incognito (Valle Gpe)",
+    "uva": "Cabernet zinfandel Grenache",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "392.00",
+    "precio_venta": "520.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 73,
+  "fields": {
+    "nombre": "Santo Tomas SB",
+    "uva": "Sauvignon Blanc",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "304.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 74,
+  "fields": {
+    "nombre": "Santo Tomas Ch",
+    "uva": "Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "304.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 75,
+  "fields": {
+    "nombre": "Santo Tomas V",
+    "uva": "Viogner",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "304.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 76,
+  "fields": {
+    "nombre": "Santo Tomas GR",
+    "uva": "Grenache",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "359.00",
+    "precio_venta": "448.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 77,
+  "fields": {
+    "nombre": "Santo Tomas Merlot",
+    "uva": "Merlot",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "398.00",
+    "precio_venta": "487.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 78,
+  "fields": {
+    "nombre": "Santo Tomas Syrah",
+    "uva": "Syrah",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "398.00",
+    "precio_venta": "487.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 79,
+  "fields": {
+    "nombre": "Tinta Mexico Santo Tomas",
+    "uva": "Barbera Merlot",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "406.00",
+    "precio_venta": "495.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 80,
+  "fields": {
+    "nombre": "Blanco Mexico Santo Tomas",
+    "uva": "Viogner",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "315.00",
+    "precio_venta": "462.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 81,
+  "fields": {
+    "nombre": "Unico Santo Tomas G Rva",
+    "uva": "Cabernet Merlot",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "1720.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 82,
+  "fields": {
+    "nombre": "Duetto Santo Tomas",
+    "uva": "Tempranillo Cabernet Sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "1720.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 83,
+  "fields": {
+    "nombre": "202 Uvas (Ags Montenegro)",
+    "uva": "Tempranillo Syrah  Malbec",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 5,
+    "precio_compra": "375.00",
+    "precio_venta": "450.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 84,
+  "fields": {
+    "nombre": "Casa Silva Coleccion",
+    "uva": "Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 6,
+    "precio_compra": "179.00",
+    "precio_venta": "279.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 88,
+  "fields": {
+    "nombre": "Finca Andina",
+    "uva": "Merlot",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 6,
+    "precio_compra": "101.00",
+    "precio_venta": "225.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 90,
+  "fields": {
+    "nombre": "Toro De Piedra Gran Reserva",
+    "uva": "Carmenere Cabernet Sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "303.00",
+    "precio_venta": "450.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 92,
+  "fields": {
+    "nombre": "Oladia",
+    "uva": "White Zinfandel",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "125.00",
+    "precio_venta": "190.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 93,
+  "fields": {
+    "nombre": "Reserva Familiar Montes Toscanini",
+    "uva": "Sauvignon Blanc",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "195.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 96,
+  "fields": {
+    "nombre": "Elegido  Bivarietal",
+    "uva": "Tannat Merlot",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "168.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 97,
+  "fields": {
+    "nombre": "Elegido Reserva Montes Toscanini",
+    "uva": "Tannat Cabernet Sauvignon Merlot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "222.00",
+    "precio_venta": "365.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 98,
+  "fields": {
+    "nombre": "Carlos Montes Criado En Roble 12M",
+    "uva": "Merlot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "327.00",
+    "precio_venta": "445.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 101,
+  "fields": {
+    "nombre": "MT Criado en Roble 15 meses",
+    "uva": "Tannat",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "445.00",
+    "precio_venta": "580.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 102,
+  "fields": {
+    "nombre": "Corte Supremo Premium 18 meses",
+    "uva": "Cabernet Tannat Merlot",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "619.00",
+    "precio_venta": "799.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 103,
+  "fields": {
+    "nombre": "Crudo Barricado Montes T. 8 meses",
+    "uva": "Merlot  Tannat  cabernet Franc Syrah",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "619.00",
+    "precio_venta": "799.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 104,
+  "fields": {
+    "nombre": "Elsa Bianchi",
+    "uva": "Torrontes",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "176.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 105,
+  "fields": {
+    "nombre": "Carelli 34",
+    "uva": "Torrontes",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "171.00",
+    "precio_venta": "310.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 109,
+  "fields": {
+    "nombre": "Carelli Madero Rva",
+    "uva": "Cabernet Franc",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "210.00",
+    "precio_venta": "350.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 111,
+  "fields": {
+    "nombre": "Carla Chiaro Reserva",
+    "uva": "Bonarda",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "291.00",
+    "precio_venta": "440.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 113,
+  "fields": {
+    "nombre": "Carla Fino Organico",
+    "uva": "Cabernet sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "175.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 115,
+  "fields": {
+    "nombre": "Pequena Vasija",
+    "uva": "Syrah-Malbec",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "188.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 117,
+  "fields": {
+    "nombre": "Ramon Roqueta Tina 16 Joven (Catalun",
+    "uva": "Tempranillo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "162.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 118,
+  "fields": {
+    "nombre": "Ramon Roqueta Crianza (Cataluna)",
+    "uva": "Tempranillo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "180.00",
+    "precio_venta": "315.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 119,
+  "fields": {
+    "nombre": "Vinder",
+    "uva": "Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 7,
+    "precio_compra": "92.00",
+    "precio_venta": "169.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 123,
+  "fields": {
+    "nombre": "12 Lunas (Somontano)",
+    "uva": "Tempranillo Syrah Garnacha Cabernet S",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "264.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 124,
+  "fields": {
+    "nombre": "12 lunas Char/Gewurz (Somontano)",
+    "uva": "Chardonnay Gewurztraminer",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "267.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 125,
+  "fields": {
+    "nombre": "Laus Chardonnay (Somontano)",
+    "uva": "Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "284.00",
+    "precio_venta": "385.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 126,
+  "fields": {
+    "nombre": "Laus Joven (Somontano)",
+    "uva": "Merlot Syrah",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "185.00",
+    "precio_venta": "295.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 128,
+  "fields": {
+    "nombre": "Senorio Villarica Juanito Rias Baixas",
+    "uva": "Albarino",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "403.00",
+    "precio_venta": "550.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 129,
+  "fields": {
+    "nombre": "Rias del Mar Rias Baixas",
+    "uva": "Albarino",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "395.00",
+    "precio_venta": "510.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 130,
+  "fields": {
+    "nombre": "Valserrano (Rioja)",
+    "uva": "Tempranillo Mazuelo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "383.00",
+    "precio_venta": "495.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 131,
+  "fields": {
+    "nombre": "Monteabellon 5 meses (R  Duero)",
+    "uva": "Tempranillo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "246.00",
+    "precio_venta": "379.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 132,
+  "fields": {
+    "nombre": "Protos Verdejo",
+    "uva": "Verdejo",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "287.00",
+    "precio_venta": "399.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 133,
+  "fields": {
+    "nombre": "Protos Clarete",
+    "uva": "Tempranillo Merlot Syrah",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "282.00",
+    "precio_venta": "385.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 134,
+  "fields": {
+    "nombre": "Protos 9 meses (Organico)",
+    "uva": "Tinta del Pais",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "382.00",
+    "precio_venta": "470.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 135,
+  "fields": {
+    "nombre": "Aire de Protos  (Cigales)",
+    "uva": "Garnacha  Albillo  Verdejo  Viura  Sauvignon",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "344.00",
+    "precio_venta": "419.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 136,
+  "fields": {
+    "nombre": "Protos Crianza (Ribera del Duero)",
+    "uva": "Tinta del Pais",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "633.00",
+    "precio_venta": "730.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 137,
+  "fields": {
+    "nombre": "Protos Reserva (Ribera del Duero)",
+    "uva": "Tinta del Pais",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "1030.00",
+    "precio_venta": "1290.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 138,
+  "fields": {
+    "nombre": "Rocca Lupo Nero Bianco( Sicilia IGT)",
+    "uva": "Catarratto Grecanico Inzolia",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "99.00",
+    "precio_venta": "195.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 139,
+  "fields": {
+    "nombre": "Rocca Lupo Nero (Puglia IGT)",
+    "uva": "Sangiovese",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "99.00",
+    "precio_venta": "195.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 140,
+  "fields": {
+    "nombre": "Rocca Montepulciano d'Abruzzo (750ml)",
+    "uva": "Montepulciano",
+    "tipo": null,
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "173.00",
+    "precio_venta": "276.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 141,
+  "fields": {
+    "nombre": "Rocca Pinot Grigio Rossato (Pavia IGT)",
+    "uva": "Pinot Grigio",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "216.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 142,
+  "fields": {
+    "nombre": "Rocca Pinot Grigio (Venezie IGT)",
+    "uva": "Pinot Grigio",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "220.00",
+    "precio_venta": "315.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 143,
+  "fields": {
+    "nombre": "Rocca 5 Vite",
+    "uva": "N. Amaro N. de Troia Malvasia prmtvo S",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "294.00",
+    "precio_venta": "399.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 144,
+  "fields": {
+    "nombre": "Rocca Dolcetto Sacc (Piemonte DOC",
+    "uva": "Dolcetto",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "234.00",
+    "precio_venta": "332.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 145,
+  "fields": {
+    "nombre": "Rocca Perciata (Sicilia IGT)",
+    "uva": "Insolia Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "207.00",
+    "precio_venta": "310.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 147,
+  "fields": {
+    "nombre": "Firriato Della Corte (Sicilia IGT)",
+    "uva": "Nero Davola",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "360.00",
+    "precio_venta": "470.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 148,
+  "fields": {
+    "nombre": "firriato Caeles  (Sicilia IGT)",
+    "uva": "Syrah",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "355.00",
+    "precio_venta": "449.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 149,
+  "fields": {
+    "nombre": "Altavilla Della Corte (Sicilia IGT)",
+    "uva": "Cabernet Sauvginon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "342.00",
+    "precio_venta": "450.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 150,
+  "fields": {
+    "nombre": "Ilivia Leone de Castris (Puglia IGT)",
+    "uva": "Primitivo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "277.00",
+    "precio_venta": "390.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 151,
+  "fields": {
+    "nombre": "Illivia Leone de Castris(Salento IGT)",
+    "uva": "Negroamaro",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "260.00",
+    "precio_venta": "355.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 152,
+  "fields": {
+    "nombre": "Villa Santera (Puglia DOC)",
+    "uva": "Primitivo Di Manduria",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "525.00",
+    "precio_venta": "640.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 153,
+  "fields": {
+    "nombre": "Colpo Di Zappa Leone Di Castris",
+    "uva": "Primitivo Di Giogia",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "838.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 154,
+  "fields": {
+    "nombre": "Perlui Leone Di Castris (Puglia DOC)",
+    "uva": "Primitivo",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "1234.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 155,
+  "fields": {
+    "nombre": "Scaia Bianco(Trevenezie IGT)",
+    "uva": "Garganera Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "355.00",
+    "precio_venta": "459.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 156,
+  "fields": {
+    "nombre": "Scaia Rosso (Venetto IGT)",
+    "uva": "Corvina",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "355.00",
+    "precio_venta": "459.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 157,
+  "fields": {
+    "nombre": "Il Lemos Leone de Castris",
+    "uva": "Sussumaniello",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "399.00",
+    "precio_venta": "420.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 158,
+  "fields": {
+    "nombre": "Dika Grasevina Feravino",
+    "uva": "Grasevina",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "475.00",
+    "precio_venta": "595.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 160,
+  "fields": {
+    "nombre": "Rajnski Rizling Orahovica",
+    "uva": "Rizling",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "444.00",
+    "precio_venta": "585.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 161,
+  "fields": {
+    "nombre": "Dika Zweigelt 2017",
+    "uva": "Lovrijenac /Frankovka",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "494.00",
+    "precio_venta": "650.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 162,
+  "fields": {
+    "nombre": "Dika Frankovka",
+    "uva": "frankovka",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "494.00",
+    "precio_venta": "650.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 163,
+  "fields": {
+    "nombre": "Dika Cabernet Franc",
+    "uva": "Cabernet Franc",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "494.00",
+    "precio_venta": "650.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 164,
+  "fields": {
+    "nombre": "Peljesac 2019",
+    "uva": "Plavac Mali",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "384.00",
+    "precio_venta": "585.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 165,
+  "fields": {
+    "nombre": "Mediterano  2013",
+    "uva": "Plavac  Mali",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "765.00",
+    "precio_venta": "885.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 166,
+  "fields": {
+    "nombre": "Ivan Dolac Ecologico Organico 2010",
+    "uva": "Plavac Mali",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "860.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 167,
+  "fields": {
+    "nombre": "Dingac 50",
+    "uva": "Plavac Mali",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 9,
+    "precio_compra": "1012.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 168,
+  "fields": {
+    "nombre": "Fleur de Rose Georges Duboeuf",
+    "uva": "Pinot Noir",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "266.00",
+    "precio_venta": "385.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 169,
+  "fields": {
+    "nombre": "Ch Bourbon La Chapelle (Medoc)",
+    "uva": "Cabernet Sauvignon  Merlot",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "347.00",
+    "precio_venta": "455.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 170,
+  "fields": {
+    "nombre": "Chateau Castera (Medoc)",
+    "uva": "Cabernet Sauvignon  Cabernet Franc",
+    "tipo": "Ttinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "539.00",
+    "precio_venta": "670.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 171,
+  "fields": {
+    "nombre": "Cotes Du Rone Fam Perrin",
+    "uva": "Syrah Grenache  Murvedre",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "329.00",
+    "precio_venta": "440.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 172,
+  "fields": {
+    "nombre": "Uby N2 (por Llegar)",
+    "uva": "Ugny Blanc Colombard",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "312.00",
+    "precio_venta": "410.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 173,
+  "fields": {
+    "nombre": "Uby N3 (Por Llegar)",
+    "uva": "Colombard Sauvignon Blanc",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "272.00",
+    "precio_venta": "380.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 174,
+  "fields": {
+    "nombre": "Uby N4 (Por Llegar)",
+    "uva": "Gros Petit Manseng",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "312.00",
+    "precio_venta": "410.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 175,
+  "fields": {
+    "nombre": "Uby N6 Rose",
+    "uva": "Cabernet Sauvignon Franc Merlot",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "304.00",
+    "precio_venta": "395.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 176,
+  "fields": {
+    "nombre": "Uby N7",
+    "uva": "Merlot Tannat",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "312.00",
+    "precio_venta": "410.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 177,
+  "fields": {
+    "nombre": "Moulin de Gassac (Por Llegar)",
+    "uva": "Pinot Noir",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "315.00",
+    "precio_venta": "410.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 178,
+  "fields": {
+    "nombre": "Moulin de Gassac",
+    "uva": "cabernet Sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "315.00",
+    "precio_venta": "410.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 180,
+  "fields": {
+    "nombre": "Chateau Du Pouey",
+    "uva": "Tannat Cabernet Franc Cab Sauv",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "352.00",
+    "precio_venta": "450.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 181,
+  "fields": {
+    "nombre": "Lapompadour Castelmaure",
+    "uva": "Carignan Syrah Grenache",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 10,
+    "precio_compra": "408.00",
+    "precio_venta": "510.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 182,
+  "fields": {
+    "nombre": "Flying Solo",
+    "uva": "Grenache  Syrah",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 5,
+    "precio_compra": "275.00",
+    "precio_venta": "390.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 183,
+  "fields": {
+    "nombre": "Flaying Solo Rose",
+    "uva": "Grenache & Syrah",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 5,
+    "precio_compra": "275.00",
+    "precio_venta": "370.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 184,
+  "fields": {
+    "nombre": "Pluma Vinho Verde",
+    "uva": "Avesso Loureiro Trajadura Arinto",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "231.00",
+    "precio_venta": "345.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 185,
+  "fields": {
+    "nombre": "Conserva vinho Verde",
+    "uva": "ArintoArinto",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "145.00",
+    "precio_venta": "227.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 186,
+  "fields": {
+    "nombre": "Conserva Rosado",
+    "uva": "Vinhao Borracal Espadeiro",
+    "tipo": "Rosado",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "145.00",
+    "precio_venta": "227.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 187,
+  "fields": {
+    "nombre": "Coastal Estate Chaardonnay",
+    "uva": "Chardonnay",
+    "tipo": "Blanco",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "234.00",
+    "precio_venta": "328.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 188,
+  "fields": {
+    "nombre": "Coastal Estate cabenet sauvignon",
+    "uva": "Cabernet sauvignon",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "234.00",
+    "precio_venta": "335.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 189,
+  "fields": {
+    "nombre": "coastal estate Pinot Noir",
+    "uva": "Pinot Noir",
+    "tipo": "Tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "234.00",
+    "precio_venta": "335.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 190,
+  "fields": {
+    "nombre": "Lambrusco Antiche Tradizioni (ER)",
+    "uva": "Salamino Maestri Marani Ancellosa",
+    "tipo": "Tinto Espumoso",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "146.00",
+    "precio_venta": "210.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 191,
+  "fields": {
+    "nombre": "Dueto Spumante Tenuta San Giorgio",
+    "uva": "Pinot Blanca Chardonnay",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "186.00",
+    "precio_venta": "295.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 192,
+  "fields": {
+    "nombre": "Flumen Prosecco Tenuta Sn Giorgio Ext",
+    "uva": "Glera",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "277.00",
+    "precio_venta": "390.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 193,
+  "fields": {
+    "nombre": "Gaudensius Blanc deNoir",
+    "uva": "Nerello Mascalese",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "759.00",
+    "precio_venta": "899.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 194,
+  "fields": {
+    "nombre": "Dezzani Asti Spumante (Piemonte)",
+    "uva": "Moscato",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "277.00",
+    "precio_venta": "379.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 195,
+  "fields": {
+    "nombre": "Cava +&+ Brut (Esp)",
+    "uva": "Chardonnay  Xare-lo  Parellada",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 8,
+    "precio_compra": "256.00",
+    "precio_venta": "350.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 196,
+  "fields": {
+    "nombre": "Louis Perdrier Brut (Fra)",
+    "uva": "Chardonnay  Pinot Noir  Pinot Blanc",
+    "tipo": "Espumoso",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "228.00",
+    "precio_venta": "325.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 197,
+  "fields": {
+    "nombre": "Cossy 1er cru",
+    "uva": "Chardonnay  Pinot Noir  Meunier",
+    "tipo": "Champagne",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "842.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 198,
+  "fields": {
+    "nombre": "Vermouth Tinto Poli",
+    "uva": "Merlot y 33 Botanicos",
+    "tipo": "Destilado",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "525.00",
+    "precio_venta": "790.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 199,
+  "fields": {
+    "nombre": "Grappa Sarpa Poli",
+    "uva": "Merlot / Cabernet",
+    "tipo": "Destilado",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "530.00",
+    "precio_venta": "795.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 200,
+  "fields": {
+    "nombre": "Ginebra Marconi 46 Poli",
+    "uva": "Bayas enebro moscatel pino nero menta",
+    "tipo": "Destilado",
+    "descripcion": "",
+    "proveedor": 4,
+    "precio_compra": "995.00",
+    "precio_venta": "1.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 217,
+  "fields": {
+    "nombre": "Altotinto Elite Blend 10 uvas (22 ms)",
+    "uva": "Nebbiolo Tannat Malbec CS Syrah",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 2,
+    "precio_compra": "925.00",
+    "precio_venta": "1300.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 270,
+  "fields": {
+    "nombre": "Viceversa Roble (Navarra)",
+    "uva": "Cabernet Merlot Tempranillo",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 3,
+    "precio_compra": "161.00",
+    "precio_venta": "299.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 275,
+  "fields": {
+    "nombre": "Laus Barrica (Somontano)",
+    "uva": "Merlot  Cabernet Sauvignon  Syrah",
+    "tipo": "tinto",
+    "descripcion": "",
+    "proveedor": 1,
+    "precio_compra": "297.00",
+    "precio_venta": "399.00",
+    "es_personalizado": false,
+    "stock": 0
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 349,
+  "fields": {
+    "nombre": "VB Chardonay personalizado Crabster AT",
+    "uva": "Chardonnay",
+    "tipo": "blanco",
+    "descripcion": "Crabster Chardonnay Personalizado",
+    "proveedor": 2,
+    "precio_compra": "277.00",
+    "precio_venta": "337.50",
+    "es_personalizado": true,
+    "stock": 36
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 350,
+  "fields": {
+    "nombre": "VT ANÉCDOTA BLEND",
+    "uva": "Merlot-Cabernet",
+    "tipo": "tinto",
+    "descripcion": "Vino tinto blend",
+    "proveedor": 2,
+    "precio_compra": "207.85",
+    "precio_venta": "305.00",
+    "es_personalizado": false,
+    "stock": 25
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 351,
+  "fields": {
+    "nombre": "ALTOTINTO ENSAMBLE",
+    "uva": "Tempranillo",
+    "tipo": "tinto",
+    "descripcion": "Ensamble de la casa",
+    "proveedor": 17,
+    "precio_compra": "180.00",
+    "precio_venta": "260.00",
+    "es_personalizado": true,
+    "stock": 6
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 352,
+  "fields": {
+    "nombre": "VALLE OCULTO CABERNET",
+    "uva": "Cabernet Sauvignon",
+    "tipo": "tinto",
+    "descripcion": "Cabernet mexicano",
+    "proveedor": 18,
+    "precio_compra": "150.00",
+    "precio_venta": "240.00",
+    "es_personalizado": false,
+    "stock": 12
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 353,
+  "fields": {
+    "nombre": "BLANCO FRESCO",
+    "uva": "Chardonnay",
+    "tipo": "blanco",
+    "descripcion": "Vino blanco joven",
+    "proveedor": 19,
+    "precio_compra": "120.50",
+    "precio_venta": "190.00",
+    "es_personalizado": false,
+    "stock": 10
+  }
+},
+{
+  "model": "inventario.producto",
+  "pk": 354,
+  "fields": {
+    "nombre": "ROSADO VERANO",
+    "uva": "Grenache",
+    "tipo": "rosado",
+    "descripcion": "Vino rosado fresco",
+    "proveedor": 20,
+    "precio_compra": "130.00",
+    "precio_venta": "200.00",
+    "es_personalizado": true,
+    "stock": 8
+  }
+},
+{
+  "model": "inventario.aliasproducto",
+  "pk": 2,
+  "fields": {
+    "alias": "ANECDOTA PRIMEROS PASOS 750 ML",
+    "producto": 6
+  }
+},
+{
+  "model": "inventario.aliasproducto",
+  "pk": 3,
+  "fields": {
+    "alias": "VB CHARDONAY ALTOTINTO",
+    "producto": 7
+  }
+},
+{
+  "model": "inventario.aliasproducto",
+  "pk": 6,
+  "fields": {
+    "alias": "ALTOTINTO SELECCION 750 ML",
+    "producto": 8
+  }
+},
+{
+  "model": "inventario.aliasproducto",
+  "pk": 7,
+  "fields": {
+    "alias": "VT ANÉCDOTA BLEND",
+    "producto": 5
+  }
+},
+{
+  "model": "inventario.aliasproducto",
+  "pk": 8,
+  "fields": {
+    "alias": "ANÉCDOTA BLEND",
+    "producto": 350
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 1,
+  "fields": {
+    "nombre_detectado": "VT Anécdota Blend",
+    "fecha_detectado": "2025-04-18T22:31:31Z",
+    "uuid_factura": "58BE9C98-9966-4ABA-B233-9ABC1D4378EE",
+    "procesado": true,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 2,
+  "fields": {
+    "nombre_detectado": "VT MONTEPULCIANO D´ABRUZZO ROCCA",
+    "fecha_detectado": "2025-04-20T03:53:14.824Z",
+    "uuid_factura": "558F6BFB-661A-4B26-A34E-C6FA56CBD907",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 4,
+  "fields": {
+    "nombre_detectado": "VT AltoTinto Gran Cabernet",
+    "fecha_detectado": "2025-05-01T19:31:41.268Z",
+    "uuid_factura": "AF79D652-25CD-4E7B-AB2B-223007FAC386",
+    "procesado": true,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 15,
+  "fields": {
+    "nombre_detectado": "ROCCA MONTEPULCIANO 1500 ML",
+    "fecha_detectado": "2025-05-01T22:09:52.097Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 25,
+  "fields": {
+    "nombre_detectado": "ROCCA MONTEPULCIANO DE ABRUZZO D.O.C",
+    "fecha_detectado": "2025-05-02T02:49:14.751Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 26,
+  "fields": {
+    "nombre_detectado": "ALTOTINTO SELECCION 750 ML",
+    "fecha_detectado": "2025-05-02T03:02:37.136Z",
+    "uuid_factura": null,
+    "procesado": true,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 27,
+  "fields": {
+    "nombre_detectado": "SIGLO XXI PINOT NOIR GRAN RESERVA 13.5° VOL ALC 2021",
+    "fecha_detectado": "2025-05-02T03:22:23.922Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 28,
+  "fields": {
+    "nombre_detectado": "IRON SEVEN TEMPRANILLO CRIANZA 2022 13.5° ALC. DO RIOJA",
+    "fecha_detectado": "2025-05-02T03:22:23.937Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 29,
+  "fields": {
+    "nombre_detectado": "ANECDOTA PRIMEROS PASOS 750 ML",
+    "fecha_detectado": "2025-05-02T03:51:23.614Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 30,
+  "fields": {
+    "nombre_detectado": "KBU  MERLOT 13° VOL ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-02T03:51:24.695Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 31,
+  "fields": {
+    "nombre_detectado": "KBU CARMENERE 13° ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-02T03:51:24.704Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 32,
+  "fields": {
+    "nombre_detectado": "KBU CABERNET SAUVIGNON 13 VOL ALC  VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-02T03:51:24.710Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 33,
+  "fields": {
+    "nombre_detectado": "VB CHARDONAY ALTOTINTO",
+    "fecha_detectado": "2025-05-03T04:40:11.020Z",
+    "uuid_factura": "A6457C3F-B7DF-440A-8D17-7619CAA3895F",
+    "procesado": true,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 34,
+  "fields": {
+    "nombre_detectado": "VB CHARDONAY PERZONALIZADO CRABSTER",
+    "fecha_detectado": "2025-05-03T04:40:11.089Z",
+    "uuid_factura": "A6457C3F-B7DF-440A-8D17-7619CAA3895F",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 35,
+  "fields": {
+    "nombre_detectado": "VT ANÉCDOTA BLEND",
+    "fecha_detectado": "2025-05-03T04:40:11.094Z",
+    "uuid_factura": "A6457C3F-B7DF-440A-8D17-7619CAA3895F",
+    "procesado": true,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 36,
+  "fields": {
+    "nombre_detectado": "VT PROTOS 9 MESES ORGÁNICO",
+    "fecha_detectado": "2025-05-03T04:44:28.598Z",
+    "uuid_factura": "043F775B-E73E-4C81-ADFC-E9541A7027BE",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 37,
+  "fields": {
+    "nombre_detectado": "VB PLUMA VHINO VERDE",
+    "fecha_detectado": "2025-05-03T04:44:28.612Z",
+    "uuid_factura": "043F775B-E73E-4C81-ADFC-E9541A7027BE",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 38,
+  "fields": {
+    "nombre_detectado": "POLI ELISIR LIMONE / LIMONCELLO",
+    "fecha_detectado": "2025-05-03T05:18:43.912Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 39,
+  "fields": {
+    "nombre_detectado": "POLI MARCONI 46 GIN",
+    "fecha_detectado": "2025-05-03T05:18:43.923Z",
+    "uuid_factura": null,
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 42,
+  "fields": {
+    "nombre_detectado": "POLI ELISIR LIMONE / LIMONCELLO",
+    "fecha_detectado": "2025-05-03T22:42:06.412Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 43,
+  "fields": {
+    "nombre_detectado": "POLI MARCONI 46 GIN",
+    "fecha_detectado": "2025-05-03T22:42:06.422Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 44,
+  "fields": {
+    "nombre_detectado": "ROCCA MONTEPULCIANO 1500 ML",
+    "fecha_detectado": "2025-05-03T22:42:06.429Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 45,
+  "fields": {
+    "nombre_detectado": "ANECDOTA PRIMEROS PASOS 750 ML",
+    "fecha_detectado": "2025-05-03T22:42:07.386Z",
+    "uuid_factura": "1Hu6rmA_W4u-kTU8u73_sxXQnJNv7MCYk",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 46,
+  "fields": {
+    "nombre_detectado": "KBU  MERLOT 13° VOL ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:42:08.397Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 47,
+  "fields": {
+    "nombre_detectado": "KBU CARMENERE 13° ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:42:08.405Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 48,
+  "fields": {
+    "nombre_detectado": "KBU CABERNET SAUVIGNON 13 VOL ALC  VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:42:08.411Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 49,
+  "fields": {
+    "nombre_detectado": "POLI ELISIR LIMONE / LIMONCELLO",
+    "fecha_detectado": "2025-05-03T22:46:20.573Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 50,
+  "fields": {
+    "nombre_detectado": "POLI MARCONI 46 GIN",
+    "fecha_detectado": "2025-05-03T22:46:20.583Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 51,
+  "fields": {
+    "nombre_detectado": "ROCCA MONTEPULCIANO 1500 ML",
+    "fecha_detectado": "2025-05-03T22:46:20.588Z",
+    "uuid_factura": "1fW6rcJwASluUTZfvp61sAy0o0NhH0DXX",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 52,
+  "fields": {
+    "nombre_detectado": "ANECDOTA PRIMEROS PASOS 750 ML",
+    "fecha_detectado": "2025-05-03T22:46:21.369Z",
+    "uuid_factura": "1Hu6rmA_W4u-kTU8u73_sxXQnJNv7MCYk",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 53,
+  "fields": {
+    "nombre_detectado": "KBU  MERLOT 13° VOL ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:46:22.320Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 54,
+  "fields": {
+    "nombre_detectado": "KBU CARMENERE 13° ALC VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:46:22.327Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 55,
+  "fields": {
+    "nombre_detectado": "KBU CABERNET SAUVIGNON 13 VOL ALC  VALLE CENTRAL 2022",
+    "fecha_detectado": "2025-05-03T22:46:22.332Z",
+    "uuid_factura": "1lxkx4hr5N91RI1I1iWRBC0MdXD1utoNA",
+    "procesado": false,
+    "origen": "compra"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 56,
+  "fields": {
+    "nombre_detectado": "VT ANÉCDOTA BLEND",
+    "fecha_detectado": "2025-08-13T06:38:52.416Z",
+    "uuid_factura": "287B3D00-F425-45BC-A443-1CF0782BDFA6",
+    "procesado": true,
+    "origen": "venta"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 57,
+  "fields": {
+    "nombre_detectado": "VT ILIVIA PRIMITIVO",
+    "fecha_detectado": "2025-08-15T01:50:23.234Z",
+    "uuid_factura": "F56F7899-8B7A-4886-93A8-3DF971289F63",
+    "procesado": false,
+    "origen": "venta"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 58,
+  "fields": {
+    "nombre_detectado": "VT ALTOTINTO GRAN CABERNET",
+    "fecha_detectado": "2025-08-15T01:50:23.247Z",
+    "uuid_factura": "F56F7899-8B7A-4886-93A8-3DF971289F63",
+    "procesado": false,
+    "origen": "venta"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 59,
+  "fields": {
+    "nombre_detectado": "VT ILIVIA PRIMITIVO",
+    "fecha_detectado": "2025-08-15T02:17:00.439Z",
+    "uuid_factura": "F56F7899-8B7A-4886-93A8-3DF971289F63",
+    "procesado": false,
+    "origen": "venta"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 60,
+  "fields": {
+    "nombre_detectado": "VT ILIVIA PRIMITIVO",
+    "fecha_detectado": "2025-08-15T05:43:51.953Z",
+    "uuid_factura": "F56F7899-8B7A-4886-93A8-3DF971289F63",
+    "procesado": false,
+    "origen": "venta"
+  }
+},
+{
+  "model": "inventario.productonoreconocido",
+  "pk": 61,
+  "fields": {
+    "nombre_detectado": "VT ALTOTINTO GRAN CABERNET",
+    "fecha_detectado": "2025-08-15T05:43:51.969Z",
+    "uuid_factura": "F56F7899-8B7A-4886-93A8-3DF971289F63",
+    "procesado": false,
+    "origen": "venta"
+  }
+}
+]

@@ -1,0 +1,26 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    
+    {# Botón Agregar VPG #}
+    <li>
+        <a href="{% url 'admin:ventas_factura_agregar_vpg' %}" 
+           class="addlink"
+           style="background: #27ae60; padding: 10px 15px; color: white; border-radius: 4px; text-decoration: none; display: inline-block;">
+            👥 Agregar VPG
+        </a>
+    </li>
+    
+    {# Botón Procesar Drive (si existe) #}
+    {% if show_drive_button %}
+    <li>
+        <a href="{% url 'admin:ventas_factura_procesar_drive' %}" 
+           class="addlink"
+           style="background: #3498db; padding: 10px 15px; color: white; border-radius: 4px; text-decoration: none; display: inline-block;">
+            📥 Procesar Drive
+        </a>
+    </li>
+    {% endif %}
+{% endblock %}

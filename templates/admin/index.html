@@ -1,0 +1,32 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+{# Sección de Reportes Financieros #}
+<div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h2 style="color: white; margin-bottom: 15px; font-size: 24px;">
+        📊 Reportes Financieros
+    </h2>
+    <p style="color: rgba(255,255,255,0.9); margin-bottom: 20px; font-size: 14px;">
+        Accede a dashboards en tiempo real de cuentas por cobrar, cuentas por pagar, flujo de caja y distribución de fondos.
+    </p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="/reportes/" style="display: inline-block; padding: 12px 24px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            🏠 Dashboard Principal
+        </a>
+        <a href="/reportes/cuentas-por-cobrar/" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            💰 Cuentas por Cobrar
+        </a>
+        <a href="/reportes/cuentas-por-pagar/" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            🏦 Cuentas por Pagar
+        </a>
+        <a href="/reportes/flujo-caja/" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            💵 Flujo de Caja
+        </a>
+        <a href="/reportes/distribucion-fondos/" style="display: inline-block; padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            🎯 Distribución de Fondos
+        </a>
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

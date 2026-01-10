@@ -1,0 +1,230 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Agregar VPG - Venta Público General{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .vpg-form-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .vpg-header {
+        background: #27ae60;
+        color: white;
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+        margin: -30px -30px 30px -30px;
+    }
+    
+    .vpg-header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+    
+    .vpg-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .form-row {
+        margin-bottom: 20px;
+    }
+    
+    .form-row label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .form-row textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+    
+    .form-row.required label:after {
+        content: " *";
+        color: #e74c3c;
+    }
+    
+    .form-actions {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        text-align: right;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background: #27ae60;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #229954;
+    }
+    
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+        margin-right: 10px;
+    }
+    
+    .btn-secondary:hover {
+        background: #7f8c8d;
+    }
+    
+    .help-text {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+    
+    .info-box {
+        background: #e8f5e9;
+        border-left: 4px solid #27ae60;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    
+    .info-box strong {
+        color: #27ae60;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vpg-form-container">
+    <div class="vpg-header">
+        <h1>👥 Agregar Venta Público General (VPG)</h1>
+        <p>El folio VPG se generará automáticamente con formato: VPG26-X</p>
+    </div>
+    
+    <div class="info-box">
+        <strong>ℹ️ Información:</strong> Las VPG son ventas que no tienen folio fiscal (CFDI). 
+        El sistema asignará automáticamente un folio consecutivo del año actual.
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row required">
+            <label for="id_cliente">Cliente</label>
+            <input type="text" 
+                   id="id_cliente" 
+                   name="cliente" 
+                   value="{{ form_data.cliente }}"
+                   placeholder="Nombre del cliente"
+                   required>
+            <div class="help-text">Nombre del cliente o "Público General"</div>
+        </div>
+        
+        <div class="form-row required">
+            <label for="id_fecha_facturacion">Fecha de Facturación</label>
+            <input type="date" 
+                   id="id_fecha_facturacion" 
+                   name="fecha_facturacion" 
+                   value="{{ form_data.fecha_facturacion|default:fecha_hoy }}"
+                   required>
+        </div>
+        
+        <div class="form-row required">
+            <label for="id_total">Total</label>
+            <input type="number" 
+                   id="id_total" 
+                   name="total" 
+                   value="{{ form_data.total }}"
+                   step="0.01" 
+                   min="0"
+                   placeholder="0.00"
+                   required>
+            <div class="help-text">Monto total de la venta</div>
+        </div>
+        
+        <div class="form-row">
+            <label for="id_subtotal">Subtotal</label>
+            <input type="number" 
+                   id="id_subtotal" 
+                   name="subtotal" 
+                   value="{{ form_data.subtotal }}"
+                   step="0.01" 
+                   min="0"
+                   placeholder="0.00">
+            <div class="help-text">Opcional - Si no se especifica, se usa el total</div>
+        </div>
+        
+        <div class="form-row">
+            <label for="id_descuento">Descuento</label>
+            <input type="number" 
+                   id="id_descuento" 
+                   name="descuento" 
+                   value="{{ form_data.descuento|default:'0.00' }}"
+                   step="0.01" 
+                   min="0"
+                   placeholder="0.00">
+        </div>
+        
+        <div class="form-row">
+            <label for="id_vencimiento">Vencimiento</label>
+            <input type="date" 
+                   id="id_vencimiento" 
+                   name="vencimiento" 
+                   value="{{ form_data.vencimiento }}">
+            <div class="help-text">Opcional - Si no se especifica, se calcula automáticamente (15 días)</div>
+        </div>
+        
+        <div class="form-row">
+            <label for="id_metodo_pago">Método de Pago</label>
+            <select id="id_metodo_pago" name="metodo_pago">
+                {% for value, label in metodo_pago_choices %}
+                <option value="{{ value }}" {% if form_data.metodo_pago == value or value == 'PUE' and not form_data.metodo_pago %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-row">
+            <label for="id_notas">Notas</label>
+            <textarea id="id_notas" 
+                      name="notas" 
+                      placeholder="Notas adicionales (opcional)">{{ form_data.notas }}</textarea>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{% url 'admin:ventas_factura_changelist' %}" class="btn btn-secondary">
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+                ✓ Crear VPG
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

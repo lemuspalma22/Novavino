@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">📦 Corte de Compras</h1>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <label for="fecha_inicio" class="form-label">Fecha de inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
+        </div>
+        <div class="col-md-5">
+            <label for="fecha_fin" class="form-label">Fecha de fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Generar Corte</button>
+        </div>
+    </form>
+
+    {% if compras %}
+        <h4 class="mb-3">Resultados del {{ fecha_inicio }} al {{ fecha_fin }}</h4>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Compra</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Personalizado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in compras %}
+                <tr>
+                    <td>{{ producto.compra.folio }}</td>
+                    <td>{{ producto.producto.nombre }}</td>
+                    <td>{{ producto.cantidad }}</td>
+                    <td>${{ producto.precio_unitario }}</td>
+                    <td>${{ producto.subtotal }}</td>
+                    <td>
+                        {% if producto.producto.es_personalizado %}
+                            Sí
+                        {% else %}
+                            No
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="mt-4">
+            <h5>🔢 Totales:</h5>
+            <p><strong>Total gastado:</strong> ${{ total_gastado }}</p>
+            <p><strong>Productos personalizados:</strong> {{ productos_personalizados }}</p>
+            <p><strong>Productos no personalizados:</strong> {{ productos_no_personalizados }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

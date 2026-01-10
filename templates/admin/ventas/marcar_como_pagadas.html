@@ -1,0 +1,337 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .factura-summary {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .factura-summary h3 {
+            margin-top: 0;
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .stat-box {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-box.pendientes {
+            border-left-color: #ffc107;
+        }
+        
+        .stat-box.pagadas {
+            border-left-color: #28a745;
+        }
+        
+        .stat-box .label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-box .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #212529;
+        }
+        
+        .facturas-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .facturas-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .facturas-list li {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .facturas-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .facturas-list li:hover {
+            background: #f8f9fa;
+        }
+        
+        .factura-folio {
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .factura-cliente {
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        .factura-total {
+            font-weight: 600;
+            color: #28a745;
+        }
+        
+        .form-section {
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .form-section h3 {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            margin-bottom: 15px;
+        }
+        
+        .form-row label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .form-row input[type="date"] {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-row .helptext {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            color: #0c5460;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Inicio</a>
+    &rsaquo; <a href="{% url 'admin:ventas_factura_changelist' %}">Facturas</a>
+    &rsaquo; Marcar como pagadas
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="factura-summary">
+    <h3>Resumen de facturas seleccionadas</h3>
+    
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="label">Total seleccionadas</div>
+            <div class="value">{{ queryset.count }}</div>
+        </div>
+        
+        <div class="stat-box pendientes">
+            <div class="label">Pendientes de pago</div>
+            <div class="value">{{ facturas_pendientes.count }}</div>
+        </div>
+        
+        {% if facturas_ya_pagadas.count > 0 %}
+        <div class="stat-box pagadas">
+            <div class="label">Ya pagadas</div>
+            <div class="value">{{ facturas_ya_pagadas.count }}</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if facturas_pendientes.count > 0 %}
+    <div style="margin-top: 20px;">
+        <h4 style="color: #495057; font-size: 14px; margin-bottom: 10px;">
+            <span class="badge badge-warning">{{ facturas_pendientes.count }}</span>
+            Facturas que serán marcadas como pagadas:
+        </h4>
+        <div class="facturas-list">
+            <ul>
+                {% for factura in facturas_pendientes %}
+                <li>
+                    <div>
+                        <span class="factura-folio">{{ factura.folio_factura }}</span>
+                        <span class="factura-cliente">- {{ factura.cliente }}</span>
+                    </div>
+                    <span class="factura-total">${{ factura.total|floatformat:2 }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if facturas_ya_pagadas.count > 0 %}
+    <div class="alert alert-info">
+        <strong>Nota:</strong> {{ facturas_ya_pagadas.count }} factura(s) de las seleccionadas ya están marcadas como pagadas y no serán modificadas.
+    </div>
+    {% endif %}
+    
+    {% if facturas_pendientes.count == 0 %}
+    <div class="alert alert-warning">
+        <strong>¡Atención!</strong> Todas las facturas seleccionadas ya están marcadas como pagadas. No hay facturas pendientes para actualizar.
+    </div>
+    {% endif %}
+</div>
+
+{% if facturas_pendientes.count > 0 %}
+<form method="post">
+    {% csrf_token %}
+    
+    <!-- Mantener la selección de facturas -->
+    {% for obj in queryset %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}" />
+    {% endfor %}
+    
+    <input type="hidden" name="action" value="marcar_como_pagadas" />
+    
+    <div class="form-section">
+        <h3>Selecciona la fecha de pago</h3>
+        
+        <div class="form-row">
+            {{ form.fecha_pago.label_tag }}
+            {{ form.fecha_pago }}
+            {% if form.fecha_pago.help_text %}
+                <span class="helptext">{{ form.fecha_pago.help_text }}</span>
+            {% endif %}
+            {% if form.fecha_pago.errors %}
+                <div class="alert alert-warning">{{ form.fecha_pago.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="button-row">
+            <button type="submit" name="apply" class="btn-primary">
+                ✓ Marcar {{ facturas_pendientes.count }} factura(s) como pagadas
+            </button>
+            <a href="{% url 'admin:ventas_factura_changelist' %}" class="btn-secondary">
+                Cancelar
+            </a>
+        </div>
+    </div>
+</form>
+{% else %}
+<div class="button-row">
+    <a href="{% url 'admin:ventas_factura_changelist' %}" class="btn-primary">
+        Volver a la lista de facturas
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}
